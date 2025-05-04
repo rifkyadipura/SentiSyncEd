@@ -48,13 +48,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($stmt->rowCount() > 0) {
         try {
-            $stmt = $conn->prepare("INSERT INTO emotions (user_id, emotion, class_session_id) VALUES (?, ?, ?)");
-            $stmt->execute([$user_id, $emotion, $class_session_id]);
+            // Begin transaction
+            $conn->beginTransaction();
+            
+            // First, check if we already have a session for this class_session_id
+            $sessionStmt = $conn->prepare("SELECT id FROM sessions WHERE id = (SELECT MIN(session_id) FROM emotions WHERE class_session_id = ? LIMIT 1)");
+            $sessionStmt->execute([$class_session_id]);
+            $sessionId = $sessionStmt->fetchColumn();
+            
+            // If no session exists, create one
+            if (!$sessionId) {
+                // Get the start_time from class_sessions to use for the session
+                $timeStmt = $conn->prepare("SELECT start_time FROM class_sessions WHERE id = ?");
+                $timeStmt->execute([$class_session_id]);
+                $startTime = $timeStmt->fetchColumn() ?: date('Y-m-d H:i:s');
+                
+                // Create a new session
+                $sessionStmt = $conn->prepare("INSERT INTO sessions (start_time) VALUES (?)");
+                $sessionStmt->execute([$startTime]);
+                $sessionId = $conn->lastInsertId();
+            }
+            
+            // Now insert the emotion with the valid session_id
+            $stmt = $conn->prepare("INSERT INTO emotions (user_id, emotion, class_session_id, session_id) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$user_id, $emotion, $class_session_id, $sessionId]);
+            
+            // Commit transaction
+            $conn->commit();
             
             logAction($conn, $user_id, "Recorded emotion: " . $emotion . " for class_session_id: " . $class_session_id);
             $success_message = "Emosi berhasil disimpan!";
         } catch (PDOException $e) {
-            $error_message = "Terjadi kesalahan saat menyimpan emosi.";
+            // Rollback transaction on error
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+            $error_message = "Terjadi kesalahan saat menyimpan emosi: " . $e->getMessage();
         }
     } else {
         $error_message = "Sesi kelas tidak valid atau sudah berakhir.";

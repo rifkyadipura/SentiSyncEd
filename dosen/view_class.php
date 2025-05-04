@@ -78,7 +78,7 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <?php include 'includes/head.php'; ?>
 </head>
@@ -124,6 +124,7 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <div class="alert alert-success">
                                 <h6>Sesi Aktif</h6>
                                 <p>Dimulai: <?php echo date('d/m/Y H:i', strtotime($active_session['start_time'])); ?></p>
+                                <p>Stopwatch: <span id="stopwatch">00:00:00</span></p>
                                 <form method="POST" action="" class="mt-2">
                                     <input type="hidden" name="session_id" value="<?php echo $active_session['id']; ?>">
                                     <button type="submit" name="end_session" class="btn btn-danger" onclick="return confirm('Yakin ingin mengakhiri sesi kelas?')">
@@ -131,6 +132,22 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </button>
                                 </form>
                             </div>
+                            <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const startTime = new Date("<?= $active_session['start_time'] ?>");
+                                function updateStopwatch() {
+                                    const now = new Date();
+                                    let diff = Math.floor((now - startTime) / 1000);
+                                    const hrs = String(Math.floor(diff / 3600)).padStart(2, '0');
+                                    diff %= 3600;
+                                    const mins = String(Math.floor(diff / 60)).padStart(2, '0');
+                                    const secs = String(diff % 60).padStart(2, '0');
+                                    document.getElementById('stopwatch').textContent = `${hrs}:${mins}:${secs}`;
+                                }
+                                updateStopwatch();
+                                setInterval(updateStopwatch, 1000);
+                            });
+                            </script>
                         <?php else: ?>
                             <form method="POST" action="">
                                 <button type="submit" name="start_session" class="btn btn-primary">
