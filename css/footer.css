@@ -1,0 +1,18 @@
+.copyright-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 0.8rem;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.85rem;
+    background: linear-gradient(to right, rgba(74, 144, 226, 0.1), rgba(74, 144, 226, 0.2), rgba(74, 144, 226, 0.1));
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    letter-spacing: 0.5px;
+}
+
+.copyright-footer span {
+    font-weight: 400;
+}
