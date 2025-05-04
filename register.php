@@ -28,7 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Insert new user
             try {
                 $stmt = $conn->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'Mahasiswa')");
-                $stmt->execute([$name, $email, md5($password)]);
+                // Use password_hash for secure storage
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $stmt->execute([$name, $email, $hashed_password]);
                 
                 $userId = $conn->lastInsertId();
                 logAction($conn, $userId, 'User registered');

@@ -78,124 +78,145 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail Kelas - <?php echo htmlspecialchars($class['class_name']); ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <?php include 'includes/head.php'; ?>
 </head>
 <body>
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h3><?php echo htmlspecialchars($class['class_name']); ?></h3>
-                        <a href="dashboard_dosen.php" class="btn btn-secondary">Kembali ke Dashboard</a>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-4">
-                            <h5>Deskripsi Kelas:</h5>
-                            <p><?php echo nl2br(htmlspecialchars($class['description'])); ?></p>
-                            <small class="text-muted">Dibuat pada: <?php echo date('d/m/Y H:i', strtotime($class['created_at'])); ?></small>
-                        </div>
+    <div class="sidebar">
+        <?php include 'sidebar.php'; ?>
+    </div>
 
-                        <!-- Session Management -->
-                        <div class="mb-4">
-                            <h5>Sesi Kelas</h5>
-                            <?php if ($active_session): ?>
-                                <div class="alert alert-success">
-                                    <h6>Sesi Aktif</h6>
-                                    <p>Dimulai: <?php echo date('d/m/Y H:i', strtotime($active_session['start_time'])); ?></p>
-                                    <form method="POST" action="" class="mt-2">
-                                        <input type="hidden" name="session_id" value="<?php echo $active_session['id']; ?>">
-                                        <button type="submit" name="end_session" class="btn btn-danger" onclick="return confirm('Yakin ingin mengakhiri sesi kelas?')">
-                                            <i class="fas fa-stop-circle"></i> Akhiri Sesi
-                                        </button>
-                                    </form>
-                                </div>
-                            <?php else: ?>
-                                <form method="POST" action="">
-                                    <button type="submit" name="start_session" class="btn btn-primary">
-                                        <i class="fas fa-play-circle"></i> Mulai Sesi Baru
+    <div class="content-wrapper">
+        <h1 class="page-title">Detail Kelas</h1>
+        <div class="row mb-4">
+            <div class="col-12">
+                <a href="dashboard_dosen.php" class="btn btn-outline-primary mb-3"><i class="bi bi-arrow-left me-2"></i> Kembali ke Dashboard</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card class-info">
+                    <div class="card-header">Informasi Kelas</div>
+                    <div class="card-body">
+                        <h2><?php echo htmlspecialchars($class['class_name']); ?></h2>
+                        <p><strong>Deskripsi Kelas:</strong> <?php echo nl2br(htmlspecialchars($class['description'])); ?></p>
+                        <small class="text-muted">Dibuat pada: <?php echo date('d/m/Y H:i', strtotime($class['created_at'])); ?></small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">Statistik Kelas</div>
+                    <div class="card-body text-center">
+                        <h5>Jumlah Mahasiswa</h5>
+                        <h3><?php echo count($members); ?></h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">Sesi Kelas</div>
+                    <div class="card-body">
+                        <?php if ($active_session): ?>
+                            <div class="alert alert-success">
+                                <h6>Sesi Aktif</h6>
+                                <p>Dimulai: <?php echo date('d/m/Y H:i', strtotime($active_session['start_time'])); ?></p>
+                                <form method="POST" action="" class="mt-2">
+                                    <input type="hidden" name="session_id" value="<?php echo $active_session['id']; ?>">
+                                    <button type="submit" name="end_session" class="btn btn-danger" onclick="return confirm('Yakin ingin mengakhiri sesi kelas?')">
+                                        <i class="fas fa-stop-circle"></i> Akhiri Sesi
                                     </button>
                                 </form>
-                            <?php endif; ?>
+                            </div>
+                        <?php else: ?>
+                            <form method="POST" action="">
+                                <button type="submit" name="start_session" class="btn btn-primary">
+                                    <i class="fas fa-play-circle"></i> Mulai Sesi Baru
+                                </button>
+                            </form>
+                        <?php endif; ?>
 
-                            <?php if (!empty($past_sessions)): ?>
-                                <div class="mt-3">
-                                    <h6>Riwayat Sesi (10 Terakhir)</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>Mulai</th>
-                                                    <th>Selesai</th>
-                                                    <th>Status</th>
-                                                    <th>Jumlah Emosi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($past_sessions as $session): ?>
-                                                <tr>
-                                                    <td><?php echo date('d/m/Y H:i', strtotime($session['start_time'])); ?></td>
-                                                    <td>
-                                                        <?php 
-                                                        echo $session['end_time'] 
-                                                            ? date('d/m/Y H:i', strtotime($session['end_time']))
-                                                            : '-';
-                                                        ?>
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge <?php echo $session['status'] === 'active' ? 'bg-success' : 'bg-secondary'; ?>">
-                                                            <?php echo $session['status'] === 'active' ? 'Aktif' : 'Selesai'; ?>
-                                                        </span>
-                                                    </td>
-                                                    <td><?php echo $session['emotion_count']; ?></td>
-                                                </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-
-                        <div class="mt-4">
-                            <h5>Daftar Mahasiswa (<?php echo count($members); ?>)</h5>
-                            <?php if (empty($members)): ?>
-                                <p class="text-muted">Belum ada mahasiswa yang bergabung dengan kelas ini.</p>
-                            <?php else: ?>
+                        <?php if (!empty($past_sessions)): ?>
+                            <div class="mt-3">
+                                <h6>Riwayat Sesi (10 Terakhir)</h6>
                                 <div class="table-responsive">
-                                    <table class="table table-striped">
+                                    <table class="table table-sm">
                                         <thead>
                                             <tr>
-                                                <th>Nama</th>
-                                                <th>Email</th>
-                                                <th>Tanggal Bergabung</th>
+                                                <th>Mulai</th>
+                                                <th>Selesai</th>
+                                                <th>Status</th>
+                                                <th>Jumlah Emosi</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php foreach ($members as $member): ?>
+                                            <?php foreach ($past_sessions as $session): ?>
                                             <tr>
-                                                <td><?php echo htmlspecialchars($member['name']); ?></td>
-                                                <td><?php echo htmlspecialchars($member['email']); ?></td>
-                                                <td><?php echo date('d/m/Y', strtotime($member['joined_at'])); ?></td>
+                                                <td><?php echo date('d/m/Y H:i', strtotime($session['start_time'])); ?></td>
+                                                <td>
+                                                    <?php 
+                                                    echo $session['end_time'] 
+                                                        ? date('d/m/Y H:i', strtotime($session['end_time']))
+                                                        : '-';
+                                                    ?>
+                                                </td>
+                                                <td>
+                                                    <span class="badge <?php echo $session['status'] === 'active' ? 'bg-success' : 'bg-secondary'; ?>">
+                                                        <?php echo $session['status'] === 'active' ? 'Aktif' : 'Selesai'; ?>
+                                                    </span>
+                                                </td>
+                                                <td><?php echo $session['emotion_count']; ?></td>
                                             </tr>
                                             <?php endforeach; ?>
                                         </tbody>
                                     </table>
                                 </div>
-                            <?php endif; ?>
-                        </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">Daftar Mahasiswa</div>
+                    <div class="card-body">
+                        <?php if (empty($members)): ?>
+                            <p class="text-center">Belum ada mahasiswa yang bergabung dengan kelas ini.</p>
+                        <?php else: ?>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nama</th>
+                                            <th>Email</th>
+                                            <th>Tanggal Bergabung</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($members as $member): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($member['name']); ?></td>
+                                            <td><?php echo htmlspecialchars($member['email']); ?></td>
+                                            <td><?php echo date('d/m/Y', strtotime($member['joined_at'])); ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
 </body>
 </html>

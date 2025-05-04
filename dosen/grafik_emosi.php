@@ -36,38 +36,32 @@ $studentsAtRisk = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grafik Emosi - SentiSyncEd</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <?php include 'includes/head.php'; ?>
 </head>
 <body>
-    <div class="dashboard">
+    <div class="sidebar">
         <?php include 'sidebar.php'; ?>
+    </div>
+    
+    <div class="content-wrapper">
+        <h1 class="page-title">Grafik Emosi Mahasiswa</h1>
         
-        <div class="main-content">
-            <div class="container py-4">
-                <h2>Grafik Emosi Mahasiswa</h2>
-                
-                <?php if (!empty($studentsAtRisk)): ?>
-                <div class="alert alert-warning mt-4">
-                    <h4>Peringatan!</h4>
-                    <p>Mahasiswa yang memerlukan perhatian:</p>
-                    <ul>
-                        <?php foreach ($studentsAtRisk as $student): ?>
-                        <li><?php echo htmlspecialchars($student['name']); ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-                <?php endif; ?>
-                
-                <div class="card mt-4">
-                    <div class="card-body">
-                        <canvas id="emotionChart"></canvas>
-                    </div>
+        <?php if (!empty($studentsAtRisk)): ?>
+        <div class="alert alert-warning mt-4">
+            <h4>Peringatan!</h4>
+            <p>Mahasiswa yang memerlukan perhatian:</p>
+            <ul>
+                <?php foreach ($studentsAtRisk as $student): ?>
+                <li><?php echo htmlspecialchars($student['name']); ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+        <?php endif; ?>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="emotionChart"></canvas>
                 </div>
             </div>
         </div>

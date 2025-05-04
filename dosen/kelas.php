@@ -18,60 +18,52 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kelola Kelas - SentiSyncEd</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
+    <?php include 'includes/head.php'; ?>
 </head>
 <body>
-    <div class="dashboard">
+    <div class="sidebar">
         <?php include 'sidebar.php'; ?>
-        
-        <div class="main-content">
-            <div class="container py-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h2>Kelola Kelas</h2>
-                    <a href="create_class.php" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Buat Kelas Baru
-                    </a>
-                </div>
-                
-                <div class="row mt-4">
-                    <?php if (empty($classes)): ?>
-                    <div class="col-12">
-                        <div class="alert alert-info">
-                            Anda belum memiliki kelas. Klik tombol "Buat Kelas Baru" untuk membuat kelas pertama Anda.
-                        </div>
-                    </div>
-                    <?php else: ?>
-                        <?php foreach ($classes as $class): ?>
-                        <div class="col-md-4 mb-4">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title"><?php echo htmlspecialchars($class['class_name']); ?></h5>
-                                    <p class="card-text"><?php echo htmlspecialchars($class['description']); ?></p>
-                                    <p class="card-text">
-                                        <small class="text-muted">Dibuat: <?php echo date('d/m/Y', strtotime($class['created_at'])); ?></small>
-                                    </p>
-                                </div>
-                                <div class="card-footer bg-transparent border-top-0">
-                                    <a href="view_class.php?id=<?php echo $class['id']; ?>" class="btn btn-info btn-sm">
-                                        <i class="fas fa-eye"></i> Lihat Detail
-                                    </a>
-                                    <a href="edit_class.php?id=<?php echo $class['id']; ?>" class="btn btn-warning btn-sm">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
-                                </div>
+    </div>
+
+    <div class="content-wrapper">
+        <h1 class="page-title">Kelola Kelas</h1>
+        <div class="row mb-4">
+            <div class="col-12">
+                <a href="create_class.php" class="btn btn-primary mb-3"><i class="bi bi-plus-circle me-2"></i> Buat Kelas Baru</a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">Daftar Kelas</div>
+                    <div class="card-body">
+                        <?php if (empty($classes)): ?>
+                            <p class="text-center">Anda belum memiliki kelas. Klik tombol "Buat Kelas Baru" untuk membuat kelas pertama Anda.</p>
+                        <?php else: ?>
+                            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                                <?php foreach ($classes as $class): ?>
+                                    <div class="col">
+                                        <div class="card class-card h-100">
+                                            <div class="card-body">
+                                                <h5 class="card-title"><?php echo htmlspecialchars($class['class_name']); ?></h5>
+                                                <p class="card-text"><?php echo htmlspecialchars($class['description']); ?></p>
+                                                <p class="card-text"><small class="text-muted">Dibuat: <?php echo date('d/m/Y', strtotime($class['created_at'])); ?></small></p>
+                                                <a href="view_class.php?id=<?php echo $class['id']; ?>" class="btn btn-primary btn-sm">Lihat Detail</a>
+                                                <a href="edit_class.php?id=<?php echo $class['id']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
                             </div>
-                        </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
 </body>
 </html>

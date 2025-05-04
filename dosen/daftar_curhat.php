@@ -24,22 +24,36 @@ $supportNotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Curhat - SentiSyncEd</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
+    <?php include 'includes/head.php'; ?>
 </head>
 <body>
-    <div class="dashboard">
+    <div class="sidebar">
         <?php include 'sidebar.php'; ?>
-        
-        <div class="main-content">
-            <div class="container py-4">
-                <h2>Daftar Curhat Mahasiswa</h2>
-                
-                <div class="card mt-4">
+    </div>
+
+    <div class="content-wrapper">
+        <h1 class="page-title">Daftar Curhat Mahasiswa</h1>
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">Pilih Kelas</div>
+                    <div class="card-body">
+                        <form method="GET" action="">
+                            <div class="mb-3">
+                                <label for="kelas_id" class="form-label">Pilih Kelas</label>
+                                <select name="kelas_id" id="kelas_id" class="form-select" onchange="this.form.submit()">
+                                    <option value="">-- Pilih Kelas --</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">Data Curhat Mahasiswa</div>
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-striped">
@@ -66,6 +80,9 @@ $supportNotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
 </body>
 </html>

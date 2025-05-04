@@ -36,44 +36,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buat Kelas Baru - SentiSyncEd</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <?php include 'includes/head.php'; ?>
 </head>
 <body>
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="text-center">Buat Kelas Baru</h3>
-                    </div>
-                    <div class="card-body">
-                        <?php if ($message): ?>
-                            <div class="alert alert-info"><?php echo $message; ?></div>
-                        <?php endif; ?>
+    <div class="sidebar">
+        <?php include 'sidebar.php'; ?>
+    </div>
 
-                        <form method="POST" action="">
-                            <div class="mb-3">
-                                <label for="class_name" class="form-label">Nama Kelas *</label>
-                                <input type="text" class="form-control" id="class_name" name="class_name" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="description" class="form-label">Deskripsi Kelas</label>
-                                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                            </div>
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary">Buat Kelas</button>
-                                <a href="dashboard_dosen.php" class="btn btn-secondary">Kembali</a>
-                            </div>
-                        </form>
+    <div class="content-wrapper">
+        <h1 class="page-title">Buat Kelas Baru</h1>
+        <div class="card">
+            <div class="card-header">
+                Formulir Pembuatan Kelas
+            </div>
+            <div class="card-body">
+                <?php if ($message): ?>
+                    <div class="alert alert-info"><?php echo $message; ?></div>
+                <?php endif; ?>
+
+                <form method="POST" action="">
+                    <div class="mb-3">
+                        <label for="class_name" class="form-label">Nama Kelas *</label>
+                        <input type="text" class="form-control" id="class_name" name="class_name" required>
                     </div>
-                </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Deskripsi Kelas</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Buat Kelas</button>
+                        <a href="dashboard_dosen.php" class="btn btn-secondary">Kembali</a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
 </body>
 </html>
