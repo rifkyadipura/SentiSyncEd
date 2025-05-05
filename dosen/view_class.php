@@ -91,7 +91,7 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <h1 class="page-title">Detail Kelas</h1>
         <div class="row mb-4">
             <div class="col-12">
-                <a href="dashboard_dosen.php" class="btn btn-outline-primary mb-3"><i class="bi bi-arrow-left me-2"></i> Kembali ke Dashboard</a>
+                <a href="kelas.php" class="btn btn-outline-primary mb-3"><i class="bi bi-arrow-left me-2"></i> Kembali ke Kelas</a>
             </div>
         </div>
         <div class="row">

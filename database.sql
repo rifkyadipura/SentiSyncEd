@@ -88,6 +88,6 @@ ADD FOREIGN KEY (class_session_id) REFERENCES class_sessions(id) ON DELETE SET N
 
 -- Insert initial users
 INSERT INTO users (name, email, password, role) VALUES
-('Super Admin', 'SuperAdmin@sentisynced.com', MD5('SuperAdmin123'), 'SuperAdmin'),
-('Mahasiswa Contoh', 'mahasiswa@example.com', MD5('mahasiswa123'), 'Mahasiswa'),
-('Dosen Contoh', 'dosen@example.com', MD5('dosen123'), 'Dosen');
+('Super Admin', 'SuperAdmin@sentisynced.com', '$2y$10$eJqkqmLEK/KqLwaY3FRVfurgemJ/3wZtyYiIqQPlfzyDsJJIfFmzC', 'SuperAdmin'),
+('Mahasiswa Contoh', 'mahasiswa@example.com', '$2y$10$VkiPl.F6oJdG6LpWd/bhtekdMd3z1HgFc0nmWuYkdRToD9JnaN3E2', 'Mahasiswa'),
+('Dosen Contoh', 'dosen@example.com', '$2y$10$UCmJMYK6yKJcRXpHayNZQeiBjowtN7eIBjowtIjf7G5jELFDOWesG', 'Dosen');

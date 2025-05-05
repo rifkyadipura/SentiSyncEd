@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if ($stmt->execute([$class_name, $description, $dosen_id])) {
             $message = 'Kelas berhasil dibuat!';
-            header('Location: dashboard_dosen.php');
+            header('Location: kelas.php');
             exit();
         } else {
             $message = 'Terjadi kesalahan. Silakan coba lagi.';
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">Buat Kelas</button>
-                        <a href="dashboard_dosen.php" class="btn btn-secondary">Kembali</a>
+                        <a href="kelas.php" class="btn btn-secondary">Kembali</a>
                     </div>
                 </form>
             </div>
