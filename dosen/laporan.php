@@ -49,7 +49,7 @@ if ($class_id > 0) {
     <div class="content-wrapper">
         <h1 class="page-title">Laporan Refleksi</h1>
         <div class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">Pilih Kelas</div>
                     <div class="card-body">
@@ -132,5 +132,22 @@ if ($class_id > 0) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <script>
+        function generatePDF() {
+            // Get current filter values
+            const classId = document.getElementById('class_id').value;
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            
+            if (!classId || !startDate || !endDate) {
+                alert('Mohon pilih kelas dan rentang tanggal terlebih dahulu');
+                return;
+            }
+            
+            // Redirect to PDF generation script with parameters
+            window.location.href = `generate_report_pdf.php?class_id=${classId}&start_date=${startDate}&end_date=${endDate}`;
+        }
+    </script>
 </body>
 </html>
