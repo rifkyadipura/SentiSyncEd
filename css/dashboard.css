@@ -149,9 +149,66 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+
+/* Large Desktop (1200px and above) */
+@media (min-width: 1200px) {
     .main-content {
-        padding: 80px 10px 10px;
+        padding: 90px 40px 40px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .card {
+        padding: 25px;
+    }
+    
+    .stat-icon {
+        font-size: 3rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+    }
+}
+
+/* Desktop (992px to 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .main-content {
+        padding: 85px 30px 30px;
+    }
+    
+    .card {
+        padding: 22px;
+    }
+}
+
+/* Tablet (768px to 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .main-content {
+        padding: 80px 20px 20px;
+    }
+    
+    .card {
+        padding: 20px;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+    }
+    
+    .stat-icon {
+        font-size: 2.2rem;
+    }
+}
+
+/* Large Mobile (576px to 767px) */
+@media (min-width: 576px) and (max-width: 767px) {
+    .main-content {
+        padding: 75px 15px 15px;
+    }
+    
+    .card {
+        padding: 18px;
     }
     
     .stat-card {
@@ -161,5 +218,68 @@ body {
     
     .stat-icon {
         margin: 0 0 10px 0;
+        font-size: 2rem;
+    }
+    
+    .stat-number {
+        font-size: 1.6rem;
+    }
+    
+    .chart-container {
+        overflow-x: auto;
+    }
+}
+
+/* Small Mobile (575px and below) */
+@media (max-width: 575px) {
+    .main-content {
+        padding: 70px 10px 10px;
+    }
+    
+    .card {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 15px;
+    }
+    
+    .stat-icon {
+        margin: 0 0 10px 0;
+        font-size: 1.8rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+    }
+    
+    .chart-container {
+        padding: 15px;
+        overflow-x: auto;
+    }
+    
+    .emotion-status {
+        flex-direction: column;
+        padding: 12px;
+    }
+    
+    .emotion-icon {
+        font-size: 1.8rem;
+    }
+    
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+    
+    .footer {
+        padding: 15px 0;
+        font-size: 0.9rem;
     }
 }

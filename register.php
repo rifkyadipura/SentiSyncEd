@@ -111,6 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-radius: 50px;
             font-size: 1rem;
             transition: all 0.3s ease;
+            box-sizing: border-box; /* Ensures padding doesn't add to width */
         }
 
         .form-group input:focus {

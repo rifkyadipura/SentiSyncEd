@@ -156,7 +156,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 2rem;
             border-radius: 15px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
+            max-width: 1000px;
+            width: 90%;
             margin: 0 auto;
         }
         .no-sessions {
@@ -250,6 +251,140 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 2rem;
             margin-right: 0.5rem;
         }
+        
+        /* Section titles */
+        .section-title {
+            margin-bottom: 1rem;
+            color: #4A90E2;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        /* Session cards and stopwatch styles */
+        .active-sessions-container {
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .session-card {
+            background: #f8f9fa;
+            border-left: 4px solid #4A90E2;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .clickable:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background: #f0f7ff;
+        }
+        
+        .selected-session-card {
+            background: #e9f7ef;
+            border-left: 4px solid #28a745;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .session-info h4 {
+            color: #4A90E2;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+        
+        .selected-session-card .session-info h4 {
+            color: #28a745;
+        }
+        
+        .session-info p {
+            margin: 0.3rem 0;
+            color: #666;
+        }
+        
+        .stopwatch-container {
+            margin-top: 0.8rem;
+            padding: 0.5rem;
+            background: #e9f2ff;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            font-weight: 600;
+        }
+        
+        .stopwatch-container i {
+            color: #4A90E2;
+            margin-right: 0.5rem;
+        }
+        
+        .stopwatch {
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: #333;
+        }
+        
+        /* Emotion options styling */
+        .emotion-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: center;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .emotion-option {
+            cursor: pointer;
+            margin: 0;
+        }
+        
+        .emotion-option input[type="radio"] {
+            display: none;
+        }
+        
+        .emotion-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border: 2px solid #e1e1e1;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        .emotion-option input[type="radio"]:checked + .emotion-content {
+            background: #e9f7ef;
+            border-color: #28a745;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .emotion-emoji {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .emotion-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .emotion-option input[type="radio"]:checked + .emotion-content .emotion-label {
+            color: #28a745;
+        }
     </style>
 </head>
 <body>
@@ -333,33 +468,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <p>Silakan tunggu dosen membuka sesi kelas.</p>
                     </div>
                 <?php else: ?>
-                    <form method="POST" action="">
-                        <div class="form-group">
-                            <label for="class_session_id">Pilih Kelas yang Sedang Sesi:</label>
-                            <select name="class_session_id" id="class_session_id" required class="class-select">
-                                <option value="">Pilih Kelas</option>
-                                <?php foreach ($active_sessions as $session): ?>
-                                    <option value="<?php echo $session['class_session_id']; ?>">
-                                        <?php echo htmlspecialchars($session['class_name']); ?> (Dosen: <?php echo htmlspecialchars($session['dosen_name']); ?>, Mulai: <?php echo date('H:i', strtotime($session['start_time'])); ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                    <h3 class="section-title">Pilih Kelas yang Sedang Sesi:</h3>
+                    <div class="active-sessions-container">
+                        <?php foreach ($active_sessions as $session): ?>
+                            <div class="session-card clickable" id="session-<?php echo $session['class_session_id']; ?>" data-session-id="<?php echo $session['class_session_id']; ?>">
+                                <div class="session-info">
+                                    <h4><?php echo htmlspecialchars($session['class_name']); ?></h4>
+                                    <p><strong>Dosen:</strong> <?php echo htmlspecialchars($session['dosen_name']); ?></p>
+                                    <p><strong>Mulai:</strong> <?php echo date('d/m/Y H:i', strtotime($session['start_time'])); ?></p>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                    <div id="emotion-form-container" style="display: none;">
+                        <div class="selected-class-info">
+                            <h3 class="section-title">Kelas yang Dipilih:</h3>
+                            <div class="selected-session-card" id="selected-session-card">
+                                <div class="session-info">
+                                    <h4 id="selected-class-name"></h4>
+                                    <p><strong>Dosen:</strong> <span id="selected-dosen-name"></span></p>
+                                    <div class="stopwatch-container">
+                                        <i class="fas fa-clock"></i> 
+                                        <span class="stopwatch" id="selected-stopwatch">00:00:00</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="emotion">Bagaimana perasaan Anda saat ini?</label>
-                            <select name="emotion" id="emotion" required>
-                                <option value="">Pilih Emosi</option>
-                                <option value="Senang">😊 Senang</option>
-                                <option value="Stres">😰 Stres</option>
-                                <option value="Lelah">😫 Lelah</option>
-                                <option value="Netral">😐 Netral</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="submit-btn">
-                            <i class="fas fa-save"></i>
-                            Simpan Emosi
-                        </button>
-                    </form>
+                        
+                        <form method="POST" action="">
+                            <input type="hidden" name="class_session_id" id="class_session_id" value="">
+                            
+                            <div class="form-group">
+                                <label for="emotion">Bagaimana perasaan Anda saat ini?</label>
+                                <div class="emotion-options">
+                                    <label class="emotion-option">
+                                        <input type="radio" name="emotion" value="Senang" required>
+                                        <div class="emotion-content">
+                                            <span class="emotion-emoji">😊</span>
+                                            <span class="emotion-label">Senang</span>
+                                        </div>
+                                    </label>
+                                    <label class="emotion-option">
+                                        <input type="radio" name="emotion" value="Stres" required>
+                                        <div class="emotion-content">
+                                            <span class="emotion-emoji">😰</span>
+                                            <span class="emotion-label">Stres</span>
+                                        </div>
+                                    </label>
+                                    <label class="emotion-option">
+                                        <input type="radio" name="emotion" value="Lelah" required>
+                                        <div class="emotion-content">
+                                            <span class="emotion-emoji">😫</span>
+                                            <span class="emotion-label">Lelah</span>
+                                        </div>
+                                    </label>
+                                    <label class="emotion-option">
+                                        <input type="radio" name="emotion" value="Netral" required>
+                                        <div class="emotion-content">
+                                            <span class="emotion-emoji">😐</span>
+                                            <span class="emotion-label">Netral</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="submit-btn">
+                                <i class="fas fa-save"></i>
+                                Simpan Emosi
+                            </button>
+                        </form>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -368,5 +547,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <footer class="copyright-footer">
         <span>&copy; <?php echo date('Y'); ?> Rifky Najra Adipura. All rights reserved.</span>
     </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Store session data for easy access
+            const sessionData = {};
+            <?php foreach ($active_sessions as $session): ?>
+                sessionData[<?php echo $session['class_session_id']; ?>] = {
+                    className: "<?php echo addslashes(htmlspecialchars($session['class_name'])); ?>",
+                    dosenName: "<?php echo addslashes(htmlspecialchars($session['dosen_name'])); ?>",
+                    startTime: "<?php echo $session['start_time']; ?>"
+                };
+            <?php endforeach; ?>
+            
+            // Handle session card clicks
+            const sessionCards = document.querySelectorAll('.session-card.clickable');
+            sessionCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Get session ID from data attribute
+                    const sessionId = this.getAttribute('data-session-id');
+                    
+                    // Reset all cards to default style
+                    sessionCards.forEach(c => {
+                        c.classList.remove('selected');
+                        c.style.borderLeftColor = '#4A90E2';
+                        c.style.background = '#f8f9fa';
+                    });
+                    
+                    // Highlight selected card
+                    this.classList.add('selected');
+                    this.style.borderLeftColor = '#28a745';
+                    this.style.background = '#f0f7ff';
+                    
+                    // Set the hidden input value
+                    document.getElementById('class_session_id').value = sessionId;
+                    
+                    // Update selected class info
+                    const sessionInfo = sessionData[sessionId];
+                    document.getElementById('selected-class-name').textContent = sessionInfo.className;
+                    document.getElementById('selected-dosen-name').textContent = sessionInfo.dosenName;
+                    
+                    // Initialize stopwatch
+                    const stopwatch = document.getElementById('selected-stopwatch');
+                    const startTime = new Date(sessionInfo.startTime);
+                    
+                    // Clear any existing interval
+                    if (window.stopwatchInterval) {
+                        clearInterval(window.stopwatchInterval);
+                    }
+                    
+                    function updateStopwatch() {
+                        const now = new Date();
+                        const diff = Math.floor((now - startTime) / 1000); // difference in seconds
+                        
+                        const hours = Math.floor(diff / 3600);
+                        const minutes = Math.floor((diff % 3600) / 60);
+                        const seconds = diff % 60;
+                        
+                        // Format as HH:MM:SS
+                        const formattedTime = 
+                            String(hours).padStart(2, '0') + ':' + 
+                            String(minutes).padStart(2, '0') + ':' + 
+                            String(seconds).padStart(2, '0');
+                        
+                        stopwatch.textContent = formattedTime;
+                    }
+                    
+                    // Update immediately and then every second
+                    updateStopwatch();
+                    window.stopwatchInterval = setInterval(updateStopwatch, 1000);
+                    
+                    // Show emotion form
+                    document.getElementById('emotion-form-container').style.display = 'block';
+                    
+                    // Smooth scroll to emotion form
+                    document.getElementById('emotion-form-container').scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+        });
+    </script>
 </body>
 </html>
