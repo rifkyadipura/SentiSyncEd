@@ -285,15 +285,29 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     
     <script>
+    // Store viewed alerts to prevent showing the same alerts repeatedly
+    let viewedAlerts = JSON.parse(localStorage.getItem('emotionAlerts')) || {
+        timestamps: {},
+        percentages: {},
+        lastShown: {}
+    };
+    
+    // Function to save viewed alerts to localStorage
+    function saveViewedAlerts() {
+        localStorage.setItem('emotionAlerts', JSON.stringify(viewedAlerts));
+    }
+    
     // Function to load emotion alerts for this class
     function loadEmotionAlerts(showModalIfAlerts = false) {
         const classId = <?php echo $class_id; ?>;
         const activeSessionId = <?php echo $active_session ? $active_session['id'] : 'null'; ?>;
         
-        // Show loading
-        $('#emotionAlertLoading').show();
-        $('#emotionAlertContent').hide();
-        $('#emotionAlertEmpty').hide();
+        // Show loading when modal is visible
+        if ($('#emotionAlertModal').hasClass('show')) {
+            $('#emotionAlertLoading').show();
+            $('#emotionAlertContent').hide();
+            $('#emotionAlertEmpty').hide();
+        }
         
         // Make AJAX request to get alerts
         $.ajax({
@@ -307,6 +321,7 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 if (response.status === 'success' && response.alerts && response.alerts.length > 0) {
                     // We have alerts to display
                     let html = '';
+                    let newAlertsExist = false;
                     
                     response.alerts.forEach(alert => {
                         const timestamp = new Date(alert.latest_timestamp);
@@ -325,6 +340,50 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         } else {
                             severityClass = 'info';
                             severityText = 'Rendah';
+                        }
+                        
+                        // Create a unique key for this alert
+                        const alertKey = `${activeSessionId}-${alert.class_id}`;
+                        
+                        // Get the stored values or set defaults
+                        const lastTimestamp = viewedAlerts.timestamps[alertKey] || 0;
+                        const lastPercentage = viewedAlerts.percentages[alertKey] || 0;
+                        const lastShown = viewedAlerts.lastShown[alertKey] || 0;
+                        const currentTimestamp = new Date(alert.latest_timestamp).getTime();
+                        const currentTime = new Date().getTime();
+                        
+                        // Debug information
+                        console.log('Alert check:', {
+                            alertKey,
+                            lastTimestamp,
+                            currentTimestamp,
+                            isNewer: currentTimestamp > lastTimestamp,
+                            lastPercentage,
+                            currentPercentage: alert.negative_percentage,
+                            percentageIncrease: alert.negative_percentage - lastPercentage,
+                            lastShown,
+                            timeSinceLastShown: (currentTime - lastShown) / 1000 + ' seconds'
+                        });
+                        
+                        // An alert is considered new if ANY of these are true:
+                        // 1. We've never seen it before (lastTimestamp === 0)
+                        // 2. The timestamp is newer than the last one we've seen (new data)
+                        // 3. The percentage has increased by at least 5%
+                        const isNewAlert = 
+                            lastTimestamp === 0 || 
+                            currentTimestamp > lastTimestamp || 
+                            alert.negative_percentage >= (lastPercentage + 5);
+                        
+                        // Only show the modal if we haven't shown it recently (in the last 5 minutes)
+                        // or if there's genuinely new data
+                        const shouldShowModal = 
+                            isNewAlert && (
+                                lastShown === 0 || 
+                                currentTime - lastShown > 5 * 60 * 1000 // 5 minutes in milliseconds
+                            );
+                        
+                        if (shouldShowModal) {
+                            newAlertsExist = true;
                         }
                         
                         html += `
@@ -346,9 +405,21 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     
                     $('#emotionAlertContent').html(html).show();
                     
-                    // Show modal automatically if there are alerts and showModalIfAlerts is true
-                    if (showModalIfAlerts) {
+                    // Show modal automatically if there are NEW alerts and showModalIfAlerts is true
+                    if (showModalIfAlerts && newAlertsExist && !$('#emotionAlertModal').hasClass('show')) {
+                        console.log('Showing modal for new alerts');
                         $('#emotionAlertModal').modal('show');
+                        
+                        // Update lastShown timestamp for all alerts
+                        response.alerts.forEach(alert => {
+                            const alertKey = `${activeSessionId}-${alert.class_id}`;
+                            viewedAlerts.lastShown[alertKey] = new Date().getTime();
+                            viewedAlerts.timestamps[alertKey] = new Date(alert.latest_timestamp).getTime();
+                            viewedAlerts.percentages[alertKey] = alert.negative_percentage;
+                        });
+                        
+                        // Save to localStorage
+                        saveViewedAlerts();
                         
                         // Play alert sound if available
                         const sound = document.getElementById('emotionAlertSound');
@@ -371,14 +442,63 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Initialize when modal is shown
     $(document).ready(function() {
+        // When modal is shown, load alerts and mark them as viewed
         $('#emotionAlertModal').on('show.bs.modal', function () {
             loadEmotionAlerts();
+        });
+        
+        // When modal is hidden, update the viewed alerts
+        $('#emotionAlertModal').on('hidden.bs.modal', function () {
+            console.log('Modal closed, updating viewed alerts');
+            // Update all viewed alerts when modal is closed
+            const activeSessionId = <?php echo $active_session ? $active_session['id'] : 'null'; ?>;
+            if (activeSessionId) {
+                // Process all alerts in the modal
+                $('#emotionAlertContent .alert').each(function() {
+                    // Extract class name to create a unique key
+                    const className = $(this).find('h6').text().trim();
+                    const alertKey = `${activeSessionId}-${<?php echo $class_id; ?>}`;
+                    
+                    // Update the lastShown timestamp to now
+                    viewedAlerts.lastShown[alertKey] = new Date().getTime();
+                    
+                    // Extract and update percentage
+                    const percentageText = $(this).find('strong').text();
+                    const percentage = parseFloat(percentageText);
+                    if (!isNaN(percentage)) {
+                        viewedAlerts.percentages[alertKey] = Math.max(viewedAlerts.percentages[alertKey] || 0, percentage);
+                    }
+                    
+                    // Extract and update timestamp
+                    const dateTimeText = $(this).find('.small.text-muted').text();
+                    if (dateTimeText) {
+                        try {
+                            const dateParts = dateTimeText.split(' ')[0].split('/');
+                            const timeParts = dateTimeText.split(' ')[1].split(':');
+                            const timestamp = new Date(
+                                dateParts[2], // year
+                                dateParts[1] - 1, // month (0-indexed)
+                                dateParts[0], // day
+                                timeParts[0], // hour
+                                timeParts[1] // minute
+                            ).getTime();
+                            viewedAlerts.timestamps[alertKey] = Math.max(viewedAlerts.timestamps[alertKey] || 0, timestamp);
+                        } catch (e) {
+                            console.error('Error parsing date:', e);
+                        }
+                    }
+                });
+                
+                // Save to localStorage
+                saveViewedAlerts();
+                console.log('Saved viewed alerts:', viewedAlerts);
+            }
         });
         
         <?php if ($active_session): ?>
         // For active sessions, check for alerts periodically
         setInterval(function() {
-            // Always check for alerts, and show modal if alerts are found
+            // Check for alerts, and show modal only if there are new alerts
             loadEmotionAlerts(true);
         }, 60000); // Check every 60 seconds
         
