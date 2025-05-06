@@ -20,6 +20,16 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create classes table
+CREATE TABLE IF NOT EXISTS classes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    class_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    dosen_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (dosen_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 -- Create emotions table
 CREATE TABLE IF NOT EXISTS emotions (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -53,14 +63,8 @@ CREATE TABLE IF NOT EXISTS logs (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE classes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    class_name VARCHAR(100) NOT NULL,
-    description TEXT,
-    dosen_id INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (dosen_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-- Classes table already created above
+-- This is a duplicate and has been removed
 
 CREATE TABLE class_members (
     id INT AUTO_INCREMENT PRIMARY KEY,

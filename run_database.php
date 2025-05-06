@@ -15,16 +15,23 @@ try {
     // Split SQL into individual statements
     $statements = explode(';', $sql);
     
+    $lastQuery = '';
     foreach ($statements as $statement) {
         $trimmed = trim($statement);
         if (!empty($trimmed)) {
-            $conn->exec($trimmed . ';');
+            try {
+                $lastQuery = $trimmed;
+                $conn->exec($trimmed . ';');
+            } catch (PDOException $innerEx) {
+                echo "Error executing query: " . $innerEx->getMessage() . "\n";
+                echo "Query yang gagal: " . $lastQuery . "\n";
+                // Lanjutkan eksekusi meskipun ada error pada satu statement
+            }
         }
     }
     
     echo "Database berhasil diinstal ulang\n";
 } catch (PDOException $e) {
-    echo "Error: " . $e->getMessage();
-    echo "\nQuery yang gagal: " . $conn->lastQuery();
+    echo "Error: " . $e->getMessage() . "\n";
 }
 ?>
