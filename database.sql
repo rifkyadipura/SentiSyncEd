@@ -35,11 +35,13 @@ CREATE TABLE IF NOT EXISTS emotions (
 CREATE TABLE IF NOT EXISTS support_notes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    session_id INT NOT NULL,
+    session_id INT NULL,
+    class_id INT NULL,
     message TEXT NOT NULL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (session_id) REFERENCES sessions(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE SET NULL,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
 );
 
 -- Create logs table

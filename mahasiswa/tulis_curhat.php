@@ -12,35 +12,113 @@ if (getUserRole() !== 'Mahasiswa') {
 $success_message = '';
 $error_message = '';
 
+// Get classes the student is enrolled in
+try {
+    $stmt = $conn->prepare("
+        SELECT c.id, c.class_name
+        FROM classes c
+        JOIN class_members cm ON c.id = cm.class_id
+        WHERE cm.user_id = ?
+        ORDER BY c.class_name
+    ");
+    $stmt->execute([$_SESSION['user_id']]);
+    $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $error_message = "Terjadi kesalahan saat mengambil daftar kelas.";
+    $classes = [];
+}
+
 // Handle support note submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = filter_input(INPUT_POST, 'message', FILTER_SANITIZE_STRING);
+    $class_id = filter_input(INPUT_POST, 'class_id', FILTER_SANITIZE_NUMBER_INT);
     $user_id = $_SESSION['user_id'];
     
-    try {
-        $stmt = $conn->prepare("INSERT INTO support_notes (user_id, message) VALUES (?, ?)");
-        $stmt->execute([$user_id, $message]);
-        
-        logAction($conn, $user_id, "Added support note");
-        $success_message = "Curhat berhasil disimpan!";
-    } catch (PDOException $e) {
-        $error_message = "Terjadi kesalahan saat menyimpan curhat.";
+    // Validate class selection
+    if (empty($class_id)) {
+        $error_message = "Silakan pilih kelas terlebih dahulu.";
+    } else {
+        try {
+            // Begin transaction for data consistency
+            $conn->beginTransaction();
+            
+            // First, ensure we have a valid session in the sessions table
+            $sessionId = null;
+            
+            // 1. Check if there's already a valid session in the sessions table
+            $sessionStmt = $conn->prepare("SELECT id FROM sessions ORDER BY id DESC LIMIT 1");
+            $sessionStmt->execute();
+            $sessionRow = $sessionStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($sessionRow) {
+                // Use existing session
+                $sessionId = $sessionRow['id'];
+            } else {
+                // Create a new session if none exists
+                $sessionStmt = $conn->prepare("INSERT INTO sessions (start_time) VALUES (NOW())");
+                $sessionStmt->execute();
+                $sessionId = $conn->lastInsertId();
+            }
+            
+            // Check if class_id column exists in support_notes table
+            $stmt = $conn->prepare("SHOW COLUMNS FROM support_notes LIKE 'class_id'");
+            $stmt->execute();
+            $class_id_exists = $stmt->rowCount() > 0;
+            
+            if ($class_id_exists) {
+                $stmt = $conn->prepare("INSERT INTO support_notes (user_id, class_id, message, session_id) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$user_id, $class_id, $message, $sessionId]);
+            } else {
+                // Fallback if class_id column doesn't exist
+                $stmt = $conn->prepare("INSERT INTO support_notes (user_id, message, session_id) VALUES (?, ?, ?)");
+                $stmt->execute([$user_id, $message, $sessionId]);
+            }
+            
+            // Commit the transaction
+            $conn->commit();
+            
+            logAction($conn, $user_id, "Added support note for class ID: $class_id");
+            $success_message = "Curhat berhasil disimpan!";
+        } catch (PDOException $e) {
+            // Rollback transaction on error
+            if ($conn->inTransaction()) {
+                $conn->rollBack();
+            }
+            $error_message = "Terjadi kesalahan saat menyimpan curhat: " . $e->getMessage();
+        }
     }
 }
 
-// Get previous notes
+// Get previous notes with class information
 try {
-    $stmt = $conn->prepare("
-        SELECT message, timestamp 
-        FROM support_notes 
-        WHERE user_id = ? 
-        ORDER BY timestamp DESC 
-        LIMIT 5
-    ");
+    // Check if class_id column exists in support_notes table
+    $stmt = $conn->prepare("SHOW COLUMNS FROM support_notes LIKE 'class_id'");
+    $stmt->execute();
+    $class_id_exists = $stmt->rowCount() > 0;
+    
+    if ($class_id_exists) {
+        $stmt = $conn->prepare("
+            SELECT sn.message, sn.timestamp, c.class_name
+            FROM support_notes sn
+            LEFT JOIN classes c ON sn.class_id = c.id
+            WHERE sn.user_id = ? 
+            ORDER BY sn.timestamp DESC 
+            LIMIT 5
+        ");
+    } else {
+        $stmt = $conn->prepare("
+            SELECT sn.message, sn.timestamp, NULL as class_name
+            FROM support_notes sn
+            WHERE sn.user_id = ? 
+            ORDER BY sn.timestamp DESC 
+            LIMIT 5
+        ");
+    }
+    
     $stmt->execute([$_SESSION['user_id']]);
     $previous_notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    $error_message = "Terjadi kesalahan saat mengambil riwayat curhat.";
+    $error_message = "Terjadi kesalahan saat mengambil riwayat curhat: " . $e->getMessage();
     $previous_notes = [];
 }
 ?>
@@ -274,16 +352,46 @@ try {
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" action="">
+                <form method="POST" action="" id="curhatForm">
                     <div class="form-group">
+                        <label for="class_id">Pilih Kelas:</label>
+                        <select name="class_id" id="class_id" class="form-select" required onchange="showMessageInput()">
+                            <option value="">-- Pilih Kelas --</option>
+                            <?php foreach ($classes as $class): ?>
+                                <option value="<?php echo $class['id']; ?>"><?php echo htmlspecialchars($class['class_name']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group" id="messageInputContainer" style="display: none;">
                         <label for="message">Bagaimana perasaan Anda? Ceritakan di sini:</label>
                         <textarea name="message" id="message" required placeholder="Tuliskan curhat Anda..."></textarea>
                     </div>
-                    <button type="submit" class="submit-btn">
+                    <button type="submit" class="submit-btn" id="submitButton" style="display: none;">
                         <i class="fas fa-paper-plane"></i>
                         Kirim Curhat
                     </button>
                 </form>
+                
+                <script>
+                function showMessageInput() {
+                    var classSelect = document.getElementById('class_id');
+                    var messageContainer = document.getElementById('messageInputContainer');
+                    var submitButton = document.getElementById('submitButton');
+                    
+                    if (classSelect.value !== '') {
+                        messageContainer.style.display = 'block';
+                        submitButton.style.display = 'block';
+                    } else {
+                        messageContainer.style.display = 'none';
+                        submitButton.style.display = 'none';
+                    }
+                }
+                
+                // Check if class is already selected (e.g., after page refresh)
+                document.addEventListener('DOMContentLoaded', function() {
+                    showMessageInput();
+                });
+                </script>
 
                 <?php if (!empty($previous_notes)): ?>
                     <div class="previous-notes">
@@ -293,6 +401,9 @@ try {
                                 <div class="note-time">
                                     <i class="fas fa-clock"></i>
                                     <?php echo date('d/m/Y H:i', strtotime($note['timestamp'])); ?>
+                                    <?php if (!empty($note['class_name'])): ?>
+                                        <span class="badge bg-primary ms-2"><?php echo htmlspecialchars($note['class_name']); ?></span>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="note-message">
                                     <?php echo htmlspecialchars($note['message']); ?>
