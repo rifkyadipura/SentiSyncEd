@@ -57,6 +57,36 @@ function getUserEmotions($userId, $startDate = null, $endDate = null) {
     return $stmt->fetchAll();
 }
 
+// Function to get user emotions filtered by class
+function getUserEmotionsByClass($userId, $classId = null) {
+    global $conn;
+    
+    // If classId is null or 0, get all emotions across all classes
+    if (!$classId) {
+        $query = "SELECT e.*, cs.start_time, c.class_name, u.name as dosen_name
+                FROM emotions e
+                LEFT JOIN class_sessions cs ON e.class_session_id = cs.id
+                LEFT JOIN classes c ON cs.class_id = c.id
+                LEFT JOIN users u ON c.dosen_id = u.id
+                WHERE e.user_id = ?
+                ORDER BY e.timestamp DESC";
+        $params = [$userId];
+    } else {
+        $query = "SELECT e.*, cs.start_time, c.class_name, u.name as dosen_name
+                FROM emotions e
+                JOIN class_sessions cs ON e.class_session_id = cs.id
+                JOIN classes c ON cs.class_id = c.id
+                JOIN users u ON c.dosen_id = u.id
+                WHERE e.user_id = ? AND c.id = ?
+                ORDER BY e.timestamp DESC";
+        $params = [$userId, $classId];
+    }
+    
+    $stmt = $conn->prepare($query);
+    $stmt->execute($params);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 // Function to get support notes
 function getSupportNotes($userId, $isTeacher = false) {
     global $conn;
