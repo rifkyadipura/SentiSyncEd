@@ -125,12 +125,17 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <h6>Sesi Aktif</h6>
                                 <p>Dimulai: <?php echo date('d/m/Y H:i', strtotime($active_session['start_time'])); ?></p>
                                 <p>Stopwatch: <span id="stopwatch">00:00:00</span></p>
-                                <form method="POST" action="" class="mt-2">
-                                    <input type="hidden" name="session_id" value="<?php echo $active_session['id']; ?>">
-                                    <button type="submit" name="end_session" class="btn btn-danger" onclick="return confirm('Yakin ingin mengakhiri sesi kelas?')">
-                                        <i class="fas fa-stop-circle"></i> Akhiri Sesi
+                                <div class="d-flex gap-2 mt-2">
+                                    <form method="POST" action="" class="me-2">
+                                        <input type="hidden" name="session_id" value="<?php echo $active_session['id']; ?>">
+                                        <button type="submit" name="end_session" class="btn btn-danger" onclick="return confirm('Yakin ingin mengakhiri sesi kelas?')">
+                                            <i class="bi bi-stop-circle"></i> Akhiri Sesi
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#emotionAlertModal">
+                                        <i class="bi bi-exclamation-triangle"></i> Peringatan Emosi
                                     </button>
-                                </form>
+                                </div>
                             </div>
                             <script>
                             document.addEventListener('DOMContentLoaded', function() {
@@ -232,8 +237,157 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
+    <!-- Emotion Alert Modal -->
+    <div class="modal fade" id="emotionAlertModal" tabindex="-1" aria-labelledby="emotionAlertModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="emotionAlertModalLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i> Peringatan Emosi
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Loading indicator -->
+                    <div id="emotionAlertLoading" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Memuat data peringatan emosi...</p>
+                    </div>
+                    
+                    <!-- Alert content will be loaded here -->
+                    <div id="emotionAlertContent" style="display: none;"></div>
+                    
+                    <!-- Empty state -->
+                    <div id="emotionAlertEmpty" class="text-center py-4" style="display: none;">
+                        <i class="bi bi-emoji-smile fs-1 text-muted"></i>
+                        <p class="mt-2">Tidak ada peringatan emosi saat ini.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="grafik_emosi.php?class_id=<?php echo $class_id; ?>" class="btn btn-primary">
+                        <i class="bi bi-graph-up"></i> Lihat Grafik Emosi
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Audio element for alert sound -->
+    <audio id="emotionAlertSound" preload="auto">
+        <source src="../assets/notification.mp3" type="audio/mpeg">
+    </audio>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <script>
+    // Function to load emotion alerts for this class
+    function loadEmotionAlerts(showModalIfAlerts = false) {
+        const classId = <?php echo $class_id; ?>;
+        const activeSessionId = <?php echo $active_session ? $active_session['id'] : 'null'; ?>;
+        
+        // Show loading
+        $('#emotionAlertLoading').show();
+        $('#emotionAlertContent').hide();
+        $('#emotionAlertEmpty').hide();
+        
+        // Make AJAX request to get alerts
+        $.ajax({
+            url: '../check_emotion_alerts.php',
+            type: 'GET',
+            data: { class_session_id: activeSessionId },
+            dataType: 'json',
+            success: function(response) {
+                $('#emotionAlertLoading').hide();
+                
+                if (response.status === 'success' && response.alerts && response.alerts.length > 0) {
+                    // We have alerts to display
+                    let html = '';
+                    
+                    response.alerts.forEach(alert => {
+                        const timestamp = new Date(alert.latest_timestamp);
+                        const formattedTime = timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                        const formattedDate = timestamp.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                        
+                        let severityClass = '';
+                        let severityText = '';
+                        
+                        if (alert.negative_percentage >= 60) {
+                            severityClass = 'danger';
+                            severityText = 'Tinggi';
+                        } else if (alert.negative_percentage >= 40) {
+                            severityClass = 'warning';
+                            severityText = 'Sedang';
+                        } else {
+                            severityClass = 'info';
+                            severityText = 'Rendah';
+                        }
+                        
+                        html += `
+                            <div class="alert alert-${severityClass} mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">${alert.class_name}</h6>
+                                    <span class="badge bg-${severityClass}">${severityText}</span>
+                                </div>
+                                <div class="small text-muted mb-2">${formattedDate} ${formattedTime}</div>
+                                <div>
+                                    <strong>${alert.negative_percentage}%</strong> emosi negatif (${alert.negative_count} dari ${alert.total_count})
+                                </div>
+                                <div class="mt-2 small fst-italic">
+                                    Mahasiswa: ${alert.affected_students}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    $('#emotionAlertContent').html(html).show();
+                    
+                    // Show modal automatically if there are alerts and showModalIfAlerts is true
+                    if (showModalIfAlerts) {
+                        $('#emotionAlertModal').modal('show');
+                        
+                        // Play alert sound if available
+                        const sound = document.getElementById('emotionAlertSound');
+                        if (sound) {
+                            sound.play().catch(e => console.log('Error playing sound:', e));
+                        }
+                    }
+                } else {
+                    // No alerts
+                    $('#emotionAlertEmpty').show();
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#emotionAlertLoading').hide();
+                $('#emotionAlertContent').html('<div class="alert alert-danger">Terjadi kesalahan saat memuat data peringatan: ' + (error || 'Unknown error') + '</div>').show();
+                console.error('Error loading emotion alerts:', error);
+            }
+        });
+    }
+    
+    // Initialize when modal is shown
+    $(document).ready(function() {
+        $('#emotionAlertModal').on('show.bs.modal', function () {
+            loadEmotionAlerts();
+        });
+        
+        <?php if ($active_session): ?>
+        // For active sessions, check for alerts periodically
+        setInterval(function() {
+            // Always check for alerts, and show modal if alerts are found
+            loadEmotionAlerts(true);
+        }, 60000); // Check every 60 seconds
+        
+        // Initial check when page loads
+        setTimeout(function() {
+            loadEmotionAlerts(true);
+        }, 5000); // Check after 5 seconds of page load
+        <?php endif; ?>
+    });
+    </script>
 </body>
 </html>
