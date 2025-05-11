@@ -289,7 +289,9 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
     let viewedAlerts = JSON.parse(localStorage.getItem('emotionAlerts')) || {
         timestamps: {},
         percentages: {},
-        lastShown: {}
+        lastShown: {},
+        stressCount: {},
+        tiredCount: {}
     };
     
     // Function to save viewed alerts to localStorage
@@ -349,6 +351,9 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         const lastTimestamp = viewedAlerts.timestamps[alertKey] || 0;
                         const lastPercentage = viewedAlerts.percentages[alertKey] || 0;
                         const lastShown = viewedAlerts.lastShown[alertKey] || 0;
+                        // Track dominant emotion change
+                        const lastStressCount = viewedAlerts.stressCount?.[alertKey] || 0;
+                        const lastTiredCount = viewedAlerts.tiredCount?.[alertKey] || 0;
                         const currentTimestamp = new Date(alert.latest_timestamp).getTime();
                         const currentTime = new Date().getTime();
                         
@@ -365,14 +370,34 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             timeSinceLastShown: (currentTime - lastShown) / 1000 + ' seconds'
                         });
                         
+                        // Check if dominant emotion has changed
+                        const currentStressCount = parseInt(alert.stress_count) || 0;
+                        const currentTiredCount = parseInt(alert.tired_count) || 0;
+                        const currentDominantEmotion = currentStressCount >= currentTiredCount ? 'stress' : 'tired';
+                        const previousDominantEmotion = lastStressCount >= lastTiredCount ? 'stress' : 'tired';
+                        const dominantEmotionChanged = currentDominantEmotion !== previousDominantEmotion;
+                        
+                        // Debug dominant emotion change
+                        console.log('Dominant emotion check:', {
+                            currentStressCount,
+                            currentTiredCount,
+                            lastStressCount,
+                            lastTiredCount,
+                            currentDominantEmotion,
+                            previousDominantEmotion,
+                            dominantEmotionChanged
+                        });
+                        
                         // An alert is considered new if ANY of these are true:
                         // 1. We've never seen it before (lastTimestamp === 0)
                         // 2. The timestamp is newer than the last one we've seen (new data)
                         // 3. The percentage has increased by at least 5%
+                        // 4. The dominant emotion type has changed (from stress to tired or vice versa)
                         const isNewAlert = 
                             lastTimestamp === 0 || 
                             currentTimestamp > lastTimestamp || 
-                            alert.negative_percentage >= (lastPercentage + 5);
+                            alert.negative_percentage >= (lastPercentage + 5) ||
+                            (dominantEmotionChanged && lastTimestamp > 0);
                         
                         // Only show the modal if we haven't shown it recently (in the last 5 minutes)
                         // or if there's genuinely new data
@@ -396,6 +421,9 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div>
                                     <strong>${alert.negative_percentage}%</strong> emosi negatif (${alert.negative_count} dari ${alert.total_count})
                                 </div>
+                                <div class="mt-1">
+                                    <strong>Emosi dominan:</strong> ${parseInt(alert.stress_count) >= parseInt(alert.tired_count) ? 'Stres' : 'Lelah'} (${parseInt(alert.stress_count) >= parseInt(alert.tired_count) ? alert.stress_count : alert.tired_count} dari ${alert.negative_count})
+                                </div>
                                 <div class="mt-2 small fst-italic">
                                     Mahasiswa: ${alert.affected_students}
                                 </div>
@@ -416,6 +444,9 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             viewedAlerts.lastShown[alertKey] = new Date().getTime();
                             viewedAlerts.timestamps[alertKey] = new Date(alert.latest_timestamp).getTime();
                             viewedAlerts.percentages[alertKey] = alert.negative_percentage;
+                            // Store stress and tired counts
+                            viewedAlerts.stressCount[alertKey] = parseInt(alert.stress_count) || 0;
+                            viewedAlerts.tiredCount[alertKey] = parseInt(alert.tired_count) || 0;
                         });
                         
                         // Save to localStorage

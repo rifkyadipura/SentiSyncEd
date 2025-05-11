@@ -17,6 +17,8 @@ function checkEmotionAlerts($conn, $class_session_id = null, $threshold_percenta
                 c.id as class_id,
                 u.name as dosen_name,
                 COUNT(CASE WHEN e.emotion IN ('Stres', 'Lelah') THEN 1 END) as negative_count,
+                COUNT(CASE WHEN e.emotion = 'Stres' THEN 1 END) as stress_count,
+                COUNT(CASE WHEN e.emotion = 'Lelah' THEN 1 END) as tired_count,
                 COUNT(e.id) as total_count,
                 (COUNT(CASE WHEN e.emotion IN ('Stres', 'Lelah') THEN 1 END) * 100.0 / COUNT(e.id)) as negative_percentage,
                 MAX(e.timestamp) as latest_timestamp,
