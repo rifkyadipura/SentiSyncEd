@@ -275,10 +275,7 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
     
-    <!-- Audio element for alert sound -->
-    <audio id="emotionAlertSound" preload="auto">
-        <source src="../assets/notification.mp3" type="audio/mpeg">
-    </audio>
+    <!-- Audio akan dibuat secara dinamis saat alert muncul -->
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
@@ -452,10 +449,30 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         // Save to localStorage
                         saveViewedAlerts();
                         
-                        // Play alert sound if available
-                        const sound = document.getElementById('emotionAlertSound');
-                        if (sound) {
-                            sound.play().catch(e => console.log('Error playing sound:', e));
+                        // Hanya buat dan putar suara alert jika benar-benar ada alert baru
+                        // dan jika alert belum pernah ditampilkan sebelumnya
+                        if (newAlertsExist) {
+                            console.log('Memainkan suara notifikasi untuk alert baru');
+                            
+                            // Buat elemen audio secara dinamis
+                            const audioElement = document.createElement('audio');
+                            audioElement.id = 'emotionAlertSound';
+                            audioElement.style.display = 'none';
+                            const sourceElement = document.createElement('source');
+                            sourceElement.src = '../assets/notification.mp3';
+                            sourceElement.type = 'audio/mpeg';
+                            audioElement.appendChild(sourceElement);
+                            document.body.appendChild(audioElement);
+                            
+                            // Putar suara
+                            audioElement.play().catch(e => console.log('Error playing sound:', e));
+                            
+                            // Hapus elemen audio setelah selesai diputar
+                            audioElement.onended = function() {
+                                if (document.body.contains(audioElement)) {
+                                    document.body.removeChild(audioElement);
+                                }
+                            };
                         }
                     }
                 } else {
