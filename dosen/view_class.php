@@ -281,7 +281,8 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     
-    <script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
     // Store viewed alerts to prevent showing the same alerts repeatedly
     let viewedAlerts = JSON.parse(localStorage.getItem('emotionAlerts')) || {
         timestamps: {},
@@ -290,272 +291,319 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
         stressCount: {},
         tiredCount: {}
     };
-    
+
     // Function to save viewed alerts to localStorage
     function saveViewedAlerts() {
         localStorage.setItem('emotionAlerts', JSON.stringify(viewedAlerts));
     }
-    
-    // Function to load emotion alerts for this class
+
+    // Variabel global untuk melacak waktu terakhir peringatan ditampilkan
+    let lastAlertShownTime = 0;
+    let lastAlertData = null;
+
+    // Mendapatkan activeSessionId dari PHP
+    const activeSessionId = <?php echo $active_session ? (int)$active_session['id'] : 'null'; ?>;
+    const classId = <?php echo (int)$class_id; ?>;
+
+    // Fungsi load emotion alerts
     function loadEmotionAlerts(showModalIfAlerts = false) {
-        const classId = <?php echo $class_id; ?>;
-        const activeSessionId = <?php echo $active_session ? $active_session['id'] : 'null'; ?>;
-        
-        // Show loading when modal is visible
+        if (!activeSessionId) {
+            console.log("Tidak ada sesi aktif, tidak melakukan pengecekan alert.");
+            return;
+        }
+
         if ($('#emotionAlertModal').hasClass('show')) {
             $('#emotionAlertLoading').show();
-            $('#emotionAlertContent').hide();
-            $('#emotionAlertEmpty').hide();
         }
-        
-        // Make AJAX request to get alerts
+        $('#emotionAlertEmpty').hide();
+        $('#emotionAlertContent').hide();
+
+        console.log('Checking for emotion alerts at ' + new Date().toLocaleTimeString());
+
+        // Pertama cek viewed alerts
         $.ajax({
-            url: '../check_emotion_alerts.php',
+            url: 'check_alert_viewed.php',
             type: 'GET',
             data: { class_session_id: activeSessionId },
             dataType: 'json',
-            success: function(response) {
-                $('#emotionAlertLoading').hide();
-                
-                if (response.status === 'success' && response.alerts && response.alerts.length > 0) {
-                    // We have alerts to display
-                    let html = '';
-                    let newAlertsExist = false;
-                    
-                    response.alerts.forEach(alert => {
-                        const timestamp = new Date(alert.latest_timestamp);
-                        const formattedTime = timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-                        const formattedDate = timestamp.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                        
-                        let severityClass = '';
-                        let severityText = '';
-                        
-                        if (alert.negative_percentage >= 60) {
-                            severityClass = 'danger';
-                            severityText = 'Tinggi';
-                        } else if (alert.negative_percentage >= 40) {
-                            severityClass = 'warning';
-                            severityText = 'Sedang';
-                        } else {
-                            severityClass = 'info';
-                            severityText = 'Rendah';
-                        }
-                        
-                        // Create a unique key for this alert
-                        const alertKey = `${activeSessionId}-${alert.class_id}`;
-                        
-                        // Get the stored values or set defaults
-                        const lastTimestamp = viewedAlerts.timestamps[alertKey] || 0;
-                        const lastPercentage = viewedAlerts.percentages[alertKey] || 0;
-                        const lastShown = viewedAlerts.lastShown[alertKey] || 0;
-                        // Track dominant emotion change
-                        const lastStressCount = viewedAlerts.stressCount?.[alertKey] || 0;
-                        const lastTiredCount = viewedAlerts.tiredCount?.[alertKey] || 0;
-                        const currentTimestamp = new Date(alert.latest_timestamp).getTime();
-                        const currentTime = new Date().getTime();
-                        
-                        // Debug information
-                        console.log('Alert check:', {
-                            alertKey,
-                            lastTimestamp,
-                            currentTimestamp,
-                            isNewer: currentTimestamp > lastTimestamp,
-                            lastPercentage,
-                            currentPercentage: alert.negative_percentage,
-                            percentageIncrease: alert.negative_percentage - lastPercentage,
-                            lastShown,
-                            timeSinceLastShown: (currentTime - lastShown) / 1000 + ' seconds'
-                        });
-                        
-                        // Check if dominant emotion has changed
-                        const currentStressCount = parseInt(alert.stress_count) || 0;
-                        const currentTiredCount = parseInt(alert.tired_count) || 0;
-                        const currentDominantEmotion = currentStressCount >= currentTiredCount ? 'stress' : 'tired';
-                        const previousDominantEmotion = lastStressCount >= lastTiredCount ? 'stress' : 'tired';
-                        const dominantEmotionChanged = currentDominantEmotion !== previousDominantEmotion;
-                        
-                        // Debug dominant emotion change
-                        console.log('Dominant emotion check:', {
-                            currentStressCount,
-                            currentTiredCount,
-                            lastStressCount,
-                            lastTiredCount,
-                            currentDominantEmotion,
-                            previousDominantEmotion,
-                            dominantEmotionChanged
-                        });
-                        
-                        // An alert is considered new if ANY of these are true:
-                        // 1. We've never seen it before (lastTimestamp === 0)
-                        // 2. The timestamp is newer than the last one we've seen (new data)
-                        // 3. The percentage has increased by at least 5%
-                        // 4. The dominant emotion type has changed (from stress to tired or vice versa)
-                        const isNewAlert = 
-                            lastTimestamp === 0 || 
-                            currentTimestamp > lastTimestamp || 
-                            alert.negative_percentage >= (lastPercentage + 5) ||
-                            (dominantEmotionChanged && lastTimestamp > 0);
-                        
-                        // Only show the modal if we haven't shown it recently (in the last 5 minutes)
-                        // or if there's genuinely new data
-                        const shouldShowModal = 
-                            isNewAlert && (
-                                lastShown === 0 || 
-                                currentTime - lastShown > 5 * 60 * 1000 // 5 minutes in milliseconds
-                            );
-                        
-                        if (shouldShowModal) {
-                            newAlertsExist = true;
-                        }
-                        
-                        html += `
-                            <div class="alert alert-${severityClass} mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0">${alert.class_name}</h6>
-                                    <span class="badge bg-${severityClass}">${severityText}</span>
-                                </div>
-                                <div class="small text-muted mb-2">${formattedDate} ${formattedTime}</div>
-                                <div>
-                                    <strong>${alert.negative_percentage}%</strong> emosi negatif (${alert.negative_count} dari ${alert.total_count})
-                                </div>
-                                <div class="mt-1">
-                                    <strong>Emosi dominan:</strong> ${parseInt(alert.stress_count) >= parseInt(alert.tired_count) ? 'Stres' : 'Lelah'} (${parseInt(alert.stress_count) >= parseInt(alert.tired_count) ? alert.stress_count : alert.tired_count} dari ${alert.negative_count})
-                                </div>
-                                <div class="mt-2 small fst-italic">
-                                    Mahasiswa: ${alert.affected_students}
-                                </div>
-                            </div>
-                        `;
-                    });
-                    
-                    $('#emotionAlertContent').html(html).show();
-                    
-                    // Show modal automatically if there are NEW alerts and showModalIfAlerts is true
-                    if (showModalIfAlerts && newAlertsExist && !$('#emotionAlertModal').hasClass('show')) {
-                        console.log('Showing modal for new alerts');
-                        $('#emotionAlertModal').modal('show');
-                        
-                        // Update lastShown timestamp for all alerts
-                        response.alerts.forEach(alert => {
-                            const alertKey = `${activeSessionId}-${alert.class_id}`;
-                            viewedAlerts.lastShown[alertKey] = new Date().getTime();
-                            viewedAlerts.timestamps[alertKey] = new Date(alert.latest_timestamp).getTime();
-                            viewedAlerts.percentages[alertKey] = alert.negative_percentage;
-                            // Store stress and tired counts
-                            viewedAlerts.stressCount[alertKey] = parseInt(alert.stress_count) || 0;
-                            viewedAlerts.tiredCount[alertKey] = parseInt(alert.tired_count) || 0;
-                        });
-                        
-                        // Save to localStorage
-                        saveViewedAlerts();
-                        
-                        // Hanya buat dan putar suara alert jika benar-benar ada alert baru
-                        // dan jika alert belum pernah ditampilkan sebelumnya
-                        if (newAlertsExist) {
-                            console.log('Memainkan suara notifikasi untuk alert baru');
-                            
-                            // Buat elemen audio secara dinamis
-                            const audioElement = document.createElement('audio');
-                            audioElement.id = 'emotionAlertSound';
-                            audioElement.style.display = 'none';
-                            const sourceElement = document.createElement('source');
-                            sourceElement.src = '../assets/notification.mp3';
-                            sourceElement.type = 'audio/mpeg';
-                            audioElement.appendChild(sourceElement);
-                            document.body.appendChild(audioElement);
-                            
-                            // Putar suara
-                            audioElement.play().catch(e => console.log('Error playing sound:', e));
-                            
-                            // Hapus elemen audio setelah selesai diputar
-                            audioElement.onended = function() {
-                                if (document.body.contains(audioElement)) {
-                                    document.body.removeChild(audioElement);
+            success: function(viewedData) {
+                // Ambil alerts terbaru
+                $.ajax({
+                    url: '../check_emotion_alerts.php',
+                    type: 'GET',
+                    data: { class_session_id: activeSessionId },
+                    dataType: 'json',
+                    success: function(response) {
+                        $('#emotionAlertLoading').hide();
+
+                        if (response.status === 'success' && response.alerts && response.alerts.length > 0) {
+                            let html = '';
+                            let newAlertsExist = false;
+                            const viewedAlertsArr = (viewedData.status === 'success' && viewedData.viewed_alerts) ? viewedData.viewed_alerts : [];
+
+                            // Bandingkan alert terbaru dengan alert terakhir yang disimpan
+                            let hasNewData = false;
+                            if (lastAlertData) {
+                                if (JSON.stringify(lastAlertData) !== JSON.stringify(response.alerts)) {
+                                    hasNewData = true;
+                                    console.log('Alert data has changed');
                                 }
-                            };
+                            } else {
+                                hasNewData = true;
+                                console.log('First alert data received');
+                            }
+                            lastAlertData = response.alerts;
+
+                            response.alerts.forEach(alert => {
+                                const timestamp = new Date(alert.latest_timestamp);
+                                const formattedTime = timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                                const formattedDate = timestamp.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+                                let severityClass = 'warning';
+                                let severityText = 'Perhatian';
+                                if (alert.severity === 'high') {
+                                    severityClass = 'danger';
+                                    severityText = 'Kritis';
+                                } else if (alert.severity === 'medium') {
+                                    severityClass = 'warning';
+                                    severityText = 'Sedang';
+                                } else {
+                                    severityClass = 'info';
+                                    severityText = 'Rendah';
+                                }
+
+                                // Cek apakah alert sudah dilihat
+                                const isViewed = viewedAlertsArr.includes(alert.latest_timestamp);
+
+                                if (!isViewed) {
+                                    newAlertsExist = true;
+                                    console.log('New alert found: ' + alert.latest_timestamp);
+                                }
+
+                                html += `
+                                    <div class="alert alert-${severityClass} mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0">${alert.class_name}</h6>
+                                            <span class="badge bg-${severityClass}">${severityText}</span>
+                                        </div>
+                                        <div class="small text-muted mb-2">${formattedDate} ${formattedTime}</div>
+                                        <div>
+                                            <strong>${alert.negative_percentage}%</strong> emosi negatif (${alert.negative_count} dari ${alert.total_count})
+                                        </div>
+                                        <div class="mt-1">
+                                            <strong>Emosi dominan:</strong> ${parseInt(alert.stress_count) >= parseInt(alert.tired_count) ? 'Stres' : 'Lelah'} (${parseInt(alert.stress_count) >= parseInt(alert.tired_count) ? alert.stress_count : alert.tired_count} dari ${alert.negative_count})
+                                        </div>
+                                        <div class="mt-2 small fst-italic">
+                                            Mahasiswa: ${alert.affected_students}
+                                        </div>
+                                    </div>
+                                `;
+                            });
+
+                            $('#emotionAlertContent').html(html).show();
+
+                            // Tampilkan modal dan suara jika perlu
+                            const currentTime = new Date().getTime();
+                            const timeSinceLastAlert = currentTime - lastAlertShownTime;
+                            const shouldShowModal = showModalIfAlerts && newAlertsExist && !$('#emotionAlertModal').hasClass('show') && (timeSinceLastAlert > 60000 || lastAlertShownTime === 0);
+
+                            console.log('Should show modal: ' + shouldShowModal);
+                            console.log('Time since last alert: ' + (timeSinceLastAlert / 1000) + ' seconds');
+
+                            if (shouldShowModal) {
+                                lastAlertShownTime = currentTime;
+                                $('#emotionAlertModal').modal('show');
+
+                                // Simpan viewed alert ke database
+                                response.alerts.forEach(alert => {
+                                    if (!viewedAlertsArr.includes(alert.latest_timestamp)) {
+                                        $.ajax({
+                                            url: 'save_alert_view.php',
+                                            type: 'POST',
+                                            data: { 
+                                                class_session_id: activeSessionId,
+                                                alert_timestamp: alert.latest_timestamp
+                                            },
+                                            dataType: 'json'
+                                        });
+                                    }
+                                });
+
+                                // Buat dan putar suara alert hanya jika modal ditampilkan
+                                // Gunakan teknik yang berbeda untuk memainkan suara
+                                try {
+                                    // Hapus audio lama jika ada
+                                    const existingAudio = document.getElementById('emotionAlertSound');
+                                    if (existingAudio) {
+                                        document.body.removeChild(existingAudio);
+                                    }
+                                    
+                                    // Buat audio baru dengan preload
+                                    const audioElement = document.createElement('audio');
+                                    audioElement.id = 'emotionAlertSound';
+                                    audioElement.preload = 'auto';
+                                    audioElement.style.display = 'none';
+                                    audioElement.volume = 0.5; // Kurangi volume
+                                    
+                                    const sourceElement = document.createElement('source');
+                                    sourceElement.src = '../assets/notification.mp3';
+                                    sourceElement.type = 'audio/mpeg';
+                                    audioElement.appendChild(sourceElement);
+                                    document.body.appendChild(audioElement);
+                                    
+                                    // Gunakan Promise untuk memainkan suara
+                                    const playPromise = audioElement.play();
+                                    
+                                    if (playPromise !== undefined) {
+                                        playPromise.then(() => {
+                                            console.log('Suara notifikasi berhasil diputar');
+                                        }).catch(e => {
+                                            console.log('Error playing sound:', e);
+                                            // Jika gagal, coba lagi dengan event click
+                                            document.addEventListener('click', function playAudioOnce() {
+                                                audioElement.play();
+                                                document.removeEventListener('click', playAudioOnce);
+                                            }, { once: true });
+                                        });
+                                    }
+                                    
+                                    // Hapus elemen audio setelah selesai diputar
+                                    audioElement.onended = function() {
+                                        if (document.body.contains(audioElement)) {
+                                            document.body.removeChild(audioElement);
+                                        }
+                                    };
+                                } catch (e) {
+                                    console.error('Error creating audio element:', e);
+                                }
+                            }
+                        } else {
+                            $('#emotionAlertEmpty').show();
                         }
+                    },
+                    error: function(xhr, status, error) {
+                        $('#emotionAlertLoading').hide();
+                        $('#emotionAlertContent').html('<div class="alert alert-danger">Terjadi kesalahan saat memuat data peringatan: ' + (error || 'Unknown error') + '</div>').show();
+                        console.error('Error loading emotion alerts:', error);
                     }
-                } else {
-                    // No alerts
-                    $('#emotionAlertEmpty').show();
-                }
+                });
             },
             error: function(xhr, status, error) {
-                $('#emotionAlertLoading').hide();
-                $('#emotionAlertContent').html('<div class="alert alert-danger">Terjadi kesalahan saat memuat data peringatan: ' + (error || 'Unknown error') + '</div>').show();
-                console.error('Error loading emotion alerts:', error);
+                console.error('Error checking viewed alerts:', error);
+                // Jika gagal cek viewed alerts, tetap ambil alerts tanpa cek viewed
+                $.ajax({
+                    url: '../check_emotion_alerts.php',
+                    type: 'GET',
+                    data: { class_session_id: activeSessionId },
+                    dataType: 'json',
+                    success: function(response) {
+                        $('#emotionAlertLoading').hide();
+
+                        if (response.status === 'success' && response.alerts && response.alerts.length > 0) {
+                            let html = '';
+                            response.alerts.forEach(alert => {
+                                const timestamp = new Date(alert.latest_timestamp);
+                                const formattedTime = timestamp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                                const formattedDate = timestamp.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+                                let severityClass = 'warning';
+                                let severityText = 'Perhatian';
+                                if (alert.severity === 'high') {
+                                    severityClass = 'danger';
+                                    severityText = 'Kritis';
+                                } else if (alert.severity === 'medium') {
+                                    severityClass = 'warning';
+                                    severityText = 'Sedang';
+                                } else {
+                                    severityClass = 'info';
+                                    severityText = 'Rendah';
+                                }
+
+                                html += `
+                                    <div class="alert alert-${severityClass} mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0">${alert.class_name}</h6>
+                                            <span class="badge bg-${severityClass}">${severityText}</span>
+                                        </div>
+                                        <div class="small text-muted mb-2">${formattedDate} ${formattedTime}</div>
+                                        <div>
+                                            <strong>${alert.negative_percentage}%</strong> emosi negatif (${alert.negative_count} dari ${alert.total_count})
+                                        </div>
+                                        <div class="mt-1">
+                                            <strong>Emosi dominan:</strong> ${parseInt(alert.stress_count) >= parseInt(alert.tired_count) ? 'Stres' : 'Lelah'} (${parseInt(alert.stress_count) >= parseInt(alert.tired_count) ? alert.stress_count : alert.tired_count} dari ${alert.negative_count})
+                                        </div>
+                                        <div class="mt-2 small fst-italic">
+                                            Mahasiswa: ${alert.affected_students}
+                                        </div>
+                                    </div>
+                                `;
+                            });
+
+                            $('#emotionAlertContent').html(html).show();
+                            // Tidak otomatis memunculkan modal dan suara saat error pengecekan viewed alerts
+                        } else {
+                            $('#emotionAlertEmpty').show();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        $('#emotionAlertLoading').hide();
+                        $('#emotionAlertContent').html('<div class="alert alert-danger">Terjadi kesalahan saat memuat data peringatan: ' + (error || 'Unknown error') + '</div>').show();
+                    }
+                });
             }
         });
     }
-    
-    // Initialize when modal is shown
+
     $(document).ready(function() {
-        // When modal is shown, load alerts and mark them as viewed
+        // Saat modal dibuka
         $('#emotionAlertModal').on('show.bs.modal', function () {
-            loadEmotionAlerts();
+            loadEmotionAlerts(false);
         });
-        
-        // When modal is hidden, update the viewed alerts
+
+        // Saat modal ditutup
         $('#emotionAlertModal').on('hidden.bs.modal', function () {
-            console.log('Modal closed, updating viewed alerts');
-            // Update all viewed alerts when modal is closed
-            const activeSessionId = <?php echo $active_session ? $active_session['id'] : 'null'; ?>;
-            if (activeSessionId) {
-                // Process all alerts in the modal
-                $('#emotionAlertContent .alert').each(function() {
-                    // Extract class name to create a unique key
-                    const className = $(this).find('h6').text().trim();
-                    const alertKey = `${activeSessionId}-${<?php echo $class_id; ?>}`;
-                    
-                    // Update the lastShown timestamp to now
-                    viewedAlerts.lastShown[alertKey] = new Date().getTime();
-                    
-                    // Extract and update percentage
-                    const percentageText = $(this).find('strong').text();
-                    const percentage = parseFloat(percentageText);
-                    if (!isNaN(percentage)) {
-                        viewedAlerts.percentages[alertKey] = Math.max(viewedAlerts.percentages[alertKey] || 0, percentage);
+            console.log('Modal closed');
+            // Simpan viewed alert ke DB lewat AJAX (jika perlu)
+
+            if (!activeSessionId) return;
+
+            $.ajax({
+                url: '../check_emotion_alerts.php',
+                type: 'GET',
+                data: { class_session_id: activeSessionId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.status === 'success' && response.alerts && response.alerts.length > 0) {
+                        response.alerts.forEach(alert => {
+                            $.ajax({
+                                url: 'save_alert_view.php',
+                                type: 'POST',
+                                data: { 
+                                    class_session_id: activeSessionId,
+                                    alert_timestamp: alert.latest_timestamp
+                                },
+                                dataType: 'json'
+                            });
+                        });
                     }
-                    
-                    // Extract and update timestamp
-                    const dateTimeText = $(this).find('.small.text-muted').text();
-                    if (dateTimeText) {
-                        try {
-                            const dateParts = dateTimeText.split(' ')[0].split('/');
-                            const timeParts = dateTimeText.split(' ')[1].split(':');
-                            const timestamp = new Date(
-                                dateParts[2], // year
-                                dateParts[1] - 1, // month (0-indexed)
-                                dateParts[0], // day
-                                timeParts[0], // hour
-                                timeParts[1] // minute
-                            ).getTime();
-                            viewedAlerts.timestamps[alertKey] = Math.max(viewedAlerts.timestamps[alertKey] || 0, timestamp);
-                        } catch (e) {
-                            console.error('Error parsing date:', e);
-                        }
-                    }
-                });
-                
-                // Save to localStorage
-                saveViewedAlerts();
-                console.log('Saved viewed alerts:', viewedAlerts);
-            }
+                }
+            });
         });
-        
+
         <?php if ($active_session): ?>
-        // For active sessions, check for alerts periodically
-        setInterval(function() {
-            // Check for alerts, and show modal only if there are new alerts
-            loadEmotionAlerts(true);
-        }, 60000); // Check every 60 seconds
-        
-        // Initial check when page loads
+        // Cek alert pertama kali 5 detik setelah load page
         setTimeout(function() {
+            console.log('Running initial emotion alert check');
             loadEmotionAlerts(true);
-        }, 5000); // Check after 5 seconds of page load
+        }, 5000);
+
+        // Cek alert setiap 60 detik
+        setInterval(function() {
+            console.log('Running scheduled emotion alert check');
+            loadEmotionAlerts(true);
+        }, 60000);
         <?php endif; ?>
     });
-    </script>
-</body>
+</script>
+
 </html>
