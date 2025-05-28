@@ -2,9 +2,8 @@
 require_once '../koneksi.php';
 require_once '../fungsi_helper.php';
 
-// Require login and check role
-requireLogin();
-if (getUserRole() !== 'Mahasiswa') {
+// Check if user is logged in and is a Mahasiswa
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Mahasiswa') {
     header('Location: ../login.php');
     exit();
 }
@@ -124,300 +123,263 @@ try {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tulis Curhat - SentiSyncEd</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/footer.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="../css/styles_mahasiswa.css">
     <style>
-        .dashboard {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            width: 250px;
-            background: white;
-            padding: 2rem;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-        }
-        .sidebar h3 {
-            color: #4A90E2;
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .sidebar-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .sidebar-menu li {
-            margin-bottom: 0.5rem;
-        }
-        .sidebar-menu a {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding: 0.8rem 1rem;
-            color: #666;
-            text-decoration: none;
-            border-radius: 8px;
+        .note-card {
+            border-left: 4px solid #4A90E2;
             transition: all 0.3s ease;
         }
-        .sidebar-menu a:hover {
-            background: #f0f7ff;
-            color: #4A90E2;
+        
+        .note-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        .sidebar-menu a.active {
-            background: #4A90E2;
-            color: white;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2rem;
-            background: #f9f9f9;
-        }
-        .curhat-form {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .curhat-form h2 {
-            color: #4A90E2;
-            margin-bottom: 1.5rem;
-            font-size: 1.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #666;
-            font-weight: 600;
-        }
-        .form-group textarea {
-            width: 100%;
-            padding: 1rem;
-            border: 2px solid #e1e1e1;
-            border-radius: 8px;
-            font-size: 1rem;
-            color: #666;
-            transition: all 0.3s ease;
+        
+        textarea.form-control {
             min-height: 150px;
             resize: vertical;
         }
-        .form-group textarea:focus {
-            border-color: #4A90E2;
-            outline: none;
-        }
-        .submit-btn {
-            background: #4A90E2;
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-        .submit-btn:hover {
-            background: #357ABD;
-        }
-        .alert {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-        .alert-success {
-            background: #E8F5E9;
-            color: #2E7D32;
-            border: 1px solid #A5D6A7;
-        }
-        .alert-error {
-            background: #FFEBEE;
-            color: #C62828;
-            border: 1px solid #FFCDD2;
-        }
-        .previous-notes {
-            margin-top: 2rem;
-        }
-        .previous-notes h3 {
-            color: #666;
-            margin-bottom: 1rem;
-            font-size: 1.2rem;
-        }
-        .note-card {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            border-left: 4px solid #4A90E2;
-        }
-        .note-time {
-            color: #999;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-        .note-message {
-            color: #666;
-        }
     </style>
 </head>
+
 <body>
-    <div class="dashboard">
-        <div class="sidebar">
-            <h3>
-                <i class="fas fa-graduation-cap"></i>
-                Menu Mahasiswa
-            </h3>
-            <ul class="sidebar-menu">
-                <li>
-                    <a href="dashboard_mahasiswa.php">
-                        <i class="fas fa-home"></i>
-                        Dashboard
-                    </a>
-                </li>
-                <li>
-                    <a href="input_emosi.php">
-                        <i class="fas fa-smile"></i>
-                        Input Emosi
-                    </a>
-                </li>
-                <li>
-                    <a href="tulis_curhat.php" class="active">
-                        <i class="fas fa-comment-dots"></i>
-                        Tulis Curhat
-                    </a>
-                </li>
-                <li>
-                    <a href="grafik_emosi.php">
-                        <i class="fas fa-chart-line"></i>
-                        Grafik Emosi
-                    </a>
-                </li>
-                <li>
-                    <a href="pilih_kelas.php">
-                        <i class="fas fa-chalkboard"></i>
-                        Pilih Kelas
-                    </a>
-                </li>
-                <li>
-                    <a href="kelas_saya.php">
-                        <i class="fas fa-book"></i>
-                        Kelas Saya
-                    </a>
-                </li>
-                <li>
-                    <a href="../login.php?logout=1">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Logout
-                    </a>
-                </li>
-            </ul>
+    <!-- Mobile Navbar -->
+    <div class="mobile-navbar d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-light me-2" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="text-white mb-0">SentiSyncEd</h4>
         </div>
         
-        <div class="main-content">
-            <div class="curhat-form">
-                <h2>
-                    <i class="fas fa-comment-dots"></i>
-                    Tulis Curhat
-                </h2>
+        <!-- Profile Dropdown for Mobile -->
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" id="mobileProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle me-1"></i>
+                <span class="d-none d-sm-inline"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Mahasiswa'); ?></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mobileProfileDropdown">
+                <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profil Saya</a></li>
+                <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-pencil-square me-2"></i>Edit Profil</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+        </div>
+    </div>
 
-                <?php if ($success_message): ?>
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i>
-                        <?php echo $success_message; ?>
-                    </div>
-                <?php endif; ?>
+    <!-- Overlay for mobile sidebar -->
+    <div class="overlay" id="overlay"></div>
 
-                <?php if ($error_message): ?>
-                    <div class="alert alert-error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <?php echo $error_message; ?>
-                    </div>
-                <?php endif; ?>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header text-center py-4 border-bottom" style="border-color: rgba(255,255,255,0.15) !important;">
+            <h2 class="mb-0" style="color:#fff; font-weight:700; font-size:24px;">SentiSyncEd</h2>
+        </div>
+        <nav class="nav flex-column py-3">
+            <a href="dashboard_mahasiswa.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-house me-2"></i> Dashboard
+            </a>
+            <a href="input_emosi.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-emoji-smile me-2"></i> Input Emosi
+            </a>
+            <a href="tulis_curhat.php" class="nav-link d-flex align-items-center px-4 py-2 text-white active" style="font-size: 1.1rem;">
+                <i class="bi bi-chat-dots me-2"></i> Tulis Curhat
+            </a>
+            <a href="grafik_emosi.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-bar-chart-line me-2"></i> Grafik Emosi
+            </a>
+            <a href="pilih_kelas.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-journal me-2"></i> Pilih Kelas
+            </a>
+            <a href="kelas_saya.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-book me-2"></i> Kelas Saya
+            </a>
+        </nav>
+    </div>
 
-                <form method="POST" action="" id="curhatForm">
-                    <div class="form-group">
-                        <label for="class_id">Pilih Kelas:</label>
-                        <select name="class_id" id="class_id" class="form-select" required onchange="showMessageInput()">
-                            <option value="">-- Pilih Kelas --</option>
-                            <?php foreach ($classes as $class): ?>
-                                <option value="<?php echo $class['id']; ?>"><?php echo htmlspecialchars($class['class_name']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="form-group" id="messageInputContainer" style="display: none;">
-                        <label for="message">Bagaimana perasaan Anda? Ceritakan di sini:</label>
-                        <textarea name="message" id="message" required placeholder="Tuliskan curhat Anda..."></textarea>
-                    </div>
-                    <button type="submit" class="submit-btn" id="submitButton" style="display: none;">
-                        <i class="fas fa-paper-plane"></i>
-                        Kirim Curhat
-                    </button>
-                </form>
-                
-                <script>
-                function showMessageInput() {
-                    var classSelect = document.getElementById('class_id');
-                    var messageContainer = document.getElementById('messageInputContainer');
-                    var submitButton = document.getElementById('submitButton');
-                    
-                    if (classSelect.value !== '') {
-                        messageContainer.style.display = 'block';
-                        submitButton.style.display = 'block';
-                    } else {
-                        messageContainer.style.display = 'none';
-                        submitButton.style.display = 'none';
-                    }
-                }
-                
-                // Check if class is already selected (e.g., after page refresh)
-                document.addEventListener('DOMContentLoaded', function() {
-                    showMessageInput();
-                });
-                </script>
+    <!-- User Dropdown in Content Area -->
+    <div class="user-dropdown dropdown d-none d-lg-block">
+        <button class="btn dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-2"></i>
+            <?php echo htmlspecialchars($_SESSION['name'] ?? 'Mahasiswa'); ?>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-pencil-square me-2"></i>Edit Profil</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
+    </div>
+        
+    <div class="content-wrapper">
+        <div class="container-fluid px-0">
+            <h1 class="page-title mb-4">Tulis Curhat</h1>
 
-                <?php if (!empty($previous_notes)): ?>
-                    <div class="previous-notes">
-                        <h3>Riwayat Curhat Terakhir</h3>
-                        <?php foreach ($previous_notes as $note): ?>
-                            <div class="note-card">
-                                <div class="note-time">
-                                    <i class="fas fa-clock"></i>
-                                    <?php echo date('d/m/Y H:i', strtotime($note['timestamp'])); ?>
-                                    <?php if (!empty($note['class_name'])): ?>
-                                        <span class="badge bg-primary ms-2"><?php echo htmlspecialchars($note['class_name']); ?></span>
-                                    <?php endif; ?>
+            <!-- Alert messages -->
+            <?php if ($success_message): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <?php echo $success_message; ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($error_message): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <?php echo $error_message; ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <!-- Main content -->
+            <div class="row">
+                <div class="col-lg-8 col-md-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Tulis Curhat Anda</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="" id="curhatForm">
+                                <div class="mb-3">
+                                    <label for="class_id" class="form-label">Pilih Kelas:</label>
+                                    <select name="class_id" id="class_id" class="form-select" required onchange="showMessageInput()">
+                                        <option value="">-- Pilih Kelas --</option>
+                                        <?php foreach ($classes as $class): ?>
+                                            <option value="<?php echo $class['id']; ?>"><?php echo htmlspecialchars($class['class_name']); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
-                                <div class="note-message">
-                                    <?php echo htmlspecialchars($note['message']); ?>
+                                <div class="mb-3" id="messageInputContainer" style="display: none;">
+                                    <label for="message" class="form-label">Bagaimana perasaan Anda? Ceritakan di sini:</label>
+                                    <textarea name="message" id="message" class="form-control" required placeholder="Tuliskan curhat Anda..."></textarea>
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary" id="submitButton" style="display: none;">
+                                        <i class="bi bi-send me-2"></i>
+                                        Kirim Curhat
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-12 mb-4">
+                    <?php if (!empty($previous_notes)): ?>
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Riwayat Curhat Terakhir</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush">
+                                    <?php foreach ($previous_notes as $note): ?>
+                                        <div class="list-group-item note-card p-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-clock me-1"></i>
+                                                    <?php echo date('d/m/Y H:i', strtotime($note['timestamp'])); ?>
+                                                </small>
+                                                <?php if (!empty($note['class_name'])): ?>
+                                                    <span class="badge bg-primary"><?php echo htmlspecialchars($note['class_name']); ?></span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <p class="mb-0"><?php echo htmlspecialchars($note['message']); ?></p>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="card">
+                            <div class="card-body text-center py-5">
+                                <i class="bi bi-chat-square-text text-muted" style="font-size: 3rem;"></i>
+                                <p class="mt-3 text-muted">Belum ada riwayat curhat</p>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
 
-    <footer class="copyright-footer">
-        <span>&copy; <?php echo date('Y'); ?> Rifky Najra Adipura. All rights reserved.</span>
-    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle sidebar on mobile
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    overlay.classList.toggle('show');
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                });
+            }
+
+            // Close sidebar when a nav link is clicked on mobile
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 992) {
+                        sidebar.classList.remove('show');
+                        overlay.classList.remove('show');
+                    }
+                });
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                }
+            });
+            
+            // Function to show/hide message input based on class selection
+            function showMessageInput() {
+                var classSelect = document.getElementById('class_id');
+                var messageContainer = document.getElementById('messageInputContainer');
+                var submitButton = document.getElementById('submitButton');
+                
+                if (classSelect.value !== '') {
+                    messageContainer.style.display = 'block';
+                    submitButton.style.display = 'block';
+                } else {
+                    messageContainer.style.display = 'none';
+                    submitButton.style.display = 'none';
+                }
+            }
+            
+            // Initialize the form state
+            showMessageInput();
+            
+            // Add event listener to the class select
+            const classSelect = document.getElementById('class_id');
+            if (classSelect) {
+                classSelect.addEventListener('change', showMessageInput);
+            }
+        });
+    </script>
 </body>
 </html>

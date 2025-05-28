@@ -2,9 +2,8 @@
 require_once '../koneksi.php';
 require_once '../fungsi_helper.php';
 
-// Require login and check role
-requireLogin();
-if (getUserRole() !== 'Mahasiswa') {
+// Check if user is logged in and is a Mahasiswa
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Mahasiswa') {
     header('Location: ../login.php');
     exit();
 }
@@ -12,13 +11,31 @@ if (getUserRole() !== 'Mahasiswa') {
 $user_id = $_SESSION['user_id'];
 
 // Get classes the student is enrolled in
-$enrolled_classes = getEnrolledClasses($user_id);
+try {
+    $stmt = $conn->prepare("SELECT c.id, c.class_name FROM classes c JOIN class_members cm ON c.id = cm.class_id WHERE cm.user_id = ? ORDER BY c.class_name");
+    $stmt->execute([$_SESSION['user_id']]);
+    $enrolled_classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $enrolled_classes = [];
+}
 
 // Get selected class ID (0 means all classes)
 $class_id = isset($_GET['class_id']) ? (int)$_GET['class_id'] : 0;
 
 // Get user's emotions based on class selection
-$emotions = getUserEmotionsByClass($user_id, $class_id);
+$emotions = [];
+try {
+    if ($class_id > 0) {
+        $stmt = $conn->prepare("SELECT e.emotion, e.timestamp, c.class_name FROM emotions e JOIN class_sessions cs ON e.class_session_id = cs.id JOIN classes c ON cs.class_id = c.id WHERE e.user_id = ? AND c.id = ? ORDER BY e.timestamp DESC");
+        $stmt->execute([$user_id, $class_id]);
+    } else {
+        $stmt = $conn->prepare("SELECT e.emotion, e.timestamp, c.class_name FROM emotions e JOIN class_sessions cs ON e.class_session_id = cs.id JOIN classes c ON cs.class_id = c.id WHERE e.user_id = ? ORDER BY e.timestamp DESC");
+        $stmt->execute([$user_id]);
+    }
+    $emotions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    // Handle error
+}
 
 // Get emotion counts for pie chart
 $emotion_counts = [
@@ -72,82 +89,20 @@ foreach ($emotions as $emotion) {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grafik Emosi - SentiSyncEd</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/footer.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="../css/styles_mahasiswa.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .dashboard {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            width: 250px;
-            background: white;
-            padding: 2rem;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-        }
-        .sidebar h3 {
-            color: #4A90E2;
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .sidebar-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .sidebar-menu li {
-            margin-bottom: 0.5rem;
-        }
-        .sidebar-menu a {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding: 0.8rem 1rem;
-            color: #666;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        .sidebar-menu a:hover {
-            background: #f0f7ff;
-            color: #4A90E2;
-        }
-        .sidebar-menu a.active {
-            background: #4A90E2;
-            color: white;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2rem;
-            background: #f9f9f9;
-        }
-        .chart-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-        }
-        .chart-title {
-            color: #4A90E2;
-            margin-bottom: 1.5rem;
-            font-size: 1.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
         .chart-wrapper {
             position: relative;
             height: 400px;
@@ -174,80 +129,81 @@ foreach ($emotions as $emotion) {
             border-radius: 8px;
             margin-bottom: 20px;
         }
-        .form-select {
-            border: 2px solid #e1e1e1;
-            padding: 10px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        .form-select:focus {
-            border-color: #4A90E2;
-            box-shadow: 0 0 0 0.25rem rgba(74, 144, 226, 0.25);
-        }
     </style>
 </head>
+
 <body>
-    <div class="dashboard">
-        <div class="sidebar">
-            <h3>
-                <i class="fas fa-graduation-cap"></i>
-                Menu Mahasiswa
-            </h3>
-            <ul class="sidebar-menu">
-                <li>
-                    <a href="dashboard_mahasiswa.php">
-                        <i class="fas fa-home"></i>
-                        Dashboard
-                    </a>
-                </li>
-                <li>
-                    <a href="input_emosi.php">
-                        <i class="fas fa-smile"></i>
-                        Input Emosi
-                    </a>
-                </li>
-                <li>
-                    <a href="tulis_curhat.php">
-                        <i class="fas fa-comment-dots"></i>
-                        Tulis Curhat
-                    </a>
-                </li>
-                <li>
-                    <a href="grafik_emosi.php" class="active">
-                        <i class="fas fa-chart-line"></i>
-                        Grafik Emosi
-                    </a>
-                </li>
-                <li>
-                    <a href="pilih_kelas.php">
-                        <i class="fas fa-chalkboard"></i>
-                        Pilih Kelas
-                    </a>
-                </li>
-                <li>
-                    <a href="kelas_saya.php">
-                        <i class="fas fa-book"></i>
-                        Kelas Saya
-                    </a>
-                </li>
-                <li>
-                    <a href="../login.php?logout=1">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Logout
-                    </a>
-                </li>
-            </ul>
+
+    <!-- Mobile Navbar -->
+    <div class="mobile-navbar d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-light me-2" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="text-white mb-0">SentiSyncEd</h4>
         </div>
         
-        <div class="main-content">
-            <div class="chart-container">
-                <h2 class="chart-title">
-                    <i class="fas fa-chart-line"></i>
-                    Grafik Emosi Saya
-                </h2>
-                
-                <!-- Class Selection Form -->
-                <div class="class-filter">
+        <!-- Profile Dropdown for Mobile -->
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" id="mobileProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle me-1"></i>
+                <span class="d-none d-sm-inline"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Mahasiswa'); ?></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mobileProfileDropdown">
+                <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header text-center py-4 border-bottom" style="border-color: rgba(255,255,255,0.15) !important;">
+            <h2 class="mb-0" style="color:#fff; font-weight:700; font-size:24px;">SentiSyncEd</h2>
+        </div>
+        <nav class="nav flex-column py-3">
+            <a href="dashboard_mahasiswa.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-house me-2"></i> Dashboard
+            </a>
+            <a href="input_emosi.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-emoji-smile me-2"></i> Input Emosi
+            </a>
+            <a href="tulis_curhat.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-chat-dots me-2"></i> Tulis Curhat
+            </a>
+            <a href="grafik_emosi.php" class="nav-link d-flex align-items-center px-4 py-2 text-white active" style="font-size: 1.1rem;">
+                <i class="bi bi-bar-chart-line me-2"></i> Grafik Emosi
+            </a>
+            <a href="pilih_kelas.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-journal me-2"></i> Pilih Kelas
+            </a>
+            <a href="kelas_saya.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-book me-2"></i> Kelas Saya
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <!-- User Dropdown in Content Area -->
+    <div class="user-dropdown dropdown d-none d-lg-block">
+        <button class="btn dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-2"></i>
+            <?php echo htmlspecialchars($_SESSION['name'] ?? 'Mahasiswa'); ?>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
+    </div>
+    
+    <div class="content-wrapper">
+        <div class="container-fluid px-0">
+            <h1 class="page-title mb-4">Grafik Emosi</h1>
+
+            <!-- Class Selection Form -->
+            <div class="card mb-4">
+                <div class="card-body">
                     <form method="GET" action="" class="row g-3">
                         <div class="col-md-6">
                             <label for="class_id" class="form-label">Pilih Kelas:</label>
@@ -262,43 +218,65 @@ foreach ($emotions as $emotion) {
                         </div>
                     </form>
                 </div>
-                
-                <?php if (empty($emotions)): ?>
-                <div class="no-data">
-                    <p>Belum ada data emosi yang direkam. Silakan input emosi terlebih dahulu.</p>
-                </div>
-                <?php else: ?>
-                <!-- Chart Type Selection -->
-                <div class="chart-type-selector">
-                    <div class="btn-group" role="group" aria-label="Chart type selector">
-                        <button type="button" class="btn btn-primary active" id="lineChartBtn">Grafik Garis</button>
-                        <button type="button" class="btn btn-primary" id="pieChartBtn">Grafik Lingkaran</button>
-                        <button type="button" class="btn btn-primary" id="barChartBtn">Grafik Batang</button>
-                    </div>
-                </div>
-                
-                <!-- Charts -->
-                <div class="charts-container mt-4">
-                    <div class="chart-wrapper" id="lineChartContainer">
-                        <canvas id="emotionLineChart"></canvas>
-                    </div>
-                    <div class="chart-wrapper" id="pieChartContainer" style="display: none;">
-                        <canvas id="emotionPieChart"></canvas>
-                    </div>
-                    <div class="chart-wrapper" id="barChartContainer" style="display: none;">
-                        <canvas id="emotionBarChart"></canvas>
-                    </div>
-                </div>
-                <?php endif; ?>
             </div>
+            
+            <?php if (empty($emotions)): ?>
+            <div class="alert alert-info">
+                <p class="mb-0">Belum ada data emosi yang direkam. Silakan input emosi terlebih dahulu.</p>
+            </div>
+            <?php else: ?>
+            <!-- Chart Type Selection -->
+            <div class="card mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0 d-flex align-items-center">
+                        <i class="bi bi-graph-up me-2 text-primary"></i>
+                        Grafik Emosi Saya
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-type-selector mb-4">
+                        <div class="btn-group" role="group" aria-label="Chart type selector">
+                            <button type="button" class="btn btn-primary active" id="lineChartBtn">Grafik Garis</button>
+                            <button type="button" class="btn btn-primary" id="pieChartBtn">Grafik Lingkaran</button>
+                            <button type="button" class="btn btn-primary" id="barChartBtn">Grafik Batang</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts -->
+                    <div class="charts-container">
+                        <div class="chart-wrapper" id="lineChartContainer">
+                            <canvas id="emotionLineChart"></canvas>
+                        </div>
+                        <div class="chart-wrapper" id="pieChartContainer" style="display: none;">
+                            <canvas id="emotionPieChart"></canvas>
+                        </div>
+                        <div class="chart-wrapper" id="barChartContainer" style="display: none;">
+                            <canvas id="emotionBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 
-    <footer class="copyright-footer">
-        <span>&copy; <?php echo date('Y'); ?> Rifky Najra Adipura. All rights reserved.</span>
-    </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Toggle sidebar
+            $('#sidebarToggle').click(function() {
+                $('#sidebar').toggleClass('show');
+                $('#overlay').toggleClass('show');
+            });
+
+            // Close sidebar when overlay is clicked
+            $('#overlay').click(function() {
+                $('#sidebar').removeClass('show');
+                $('#overlay').removeClass('show');
+            });
+        });
+    </script>
     <script>
     <?php if (!empty($emotions)): ?>
         // Prepare data for charts

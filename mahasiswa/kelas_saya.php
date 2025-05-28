@@ -2,9 +2,8 @@
 require_once '../koneksi.php';
 require_once '../fungsi_helper.php';
 
-// Require login and check role
-requireLogin();
-if (getUserRole() !== 'Mahasiswa') {
+// Check if user is logged in and is a Mahasiswa
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Mahasiswa') {
     header('Location: ../login.php');
     exit();
 }
@@ -48,281 +47,217 @@ try {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelas Saya - SentiSyncEd</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/footer.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="../css/styles_mahasiswa.css">
     <style>
-        .dashboard {
-            display: flex;
-            min-height: 100vh;
-        }
-        .sidebar {
-            width: 250px;
-            background: white;
-            padding: 2rem;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-        }
-        .sidebar h3 {
-            color: #4A90E2;
-            margin-bottom: 1.5rem;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .sidebar-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .sidebar-menu li {
-            margin-bottom: 0.5rem;
-        }
-        .sidebar-menu a {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            padding: 0.8rem 1rem;
-            color: #666;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        .sidebar-menu a:hover {
-            background: #f0f7ff;
-            color: #4A90E2;
-        }
-        .sidebar-menu a.active {
-            background: #4A90E2;
-            color: white;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2rem;
-            background: #f9f9f9;
-        }
-        .page-title {
-            color: #4A90E2;
-            margin-bottom: 2rem;
-            font-size: 1.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .classes-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
         .class-card {
-            background: white;
-            border-radius: 15px;
-            padding: 1.5rem;
+            border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
+        
         .class-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
-        .class-card h3 {
-            color: #4A90E2;
-            margin: 0 0 1rem 0;
-            font-size: 1.2rem;
+        
+        .class-card .card-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
+        
         .class-info {
+            flex: 1;
             margin-bottom: 1rem;
-            color: #666;
         }
+        
         .class-info p {
-            margin: 0.5rem 0;
+            margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
         }
+        
         .class-info i {
-            color: #4A90E2;
+            margin-right: 8px;
             width: 20px;
+            color: var(--bs-primary);
         }
+        
         .unenroll-btn {
             width: 100%;
-            padding: 0.8rem;
-            border: none;
-            border-radius: 8px;
-            background: #dc3545;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s ease;
+            margin-top: auto;
         }
-        .unenroll-btn:hover {
-            background: #c82333;
-        }
-        .alert {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-        .alert-success {
-            background: #E8F5E9;
-            color: #2E7D32;
-            border: 1px solid #A5D6A7;
-        }
-        .alert-error {
-            background: #FFEBEE;
-            color: #C62828;
-            border: 1px solid #FFCDD2;
-        }
+        
         .no-classes {
             text-align: center;
             padding: 3rem;
             background: white;
-            border-radius: 15px;
+            border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+        
         .no-classes i {
             font-size: 3rem;
-            color: #4A90E2;
+            color: var(--bs-primary);
             margin-bottom: 1rem;
         }
+        
         .no-classes h3 {
             color: #666;
             margin-bottom: 1rem;
         }
-        .no-classes a {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.8rem 1.5rem;
-            background: #4A90E2;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: background 0.3s ease;
-        }
-        .no-classes a:hover {
-            background: #357ABD;
-        }
     </style>
 </head>
+
 <body>
-    <div class="dashboard">
-        <div class="sidebar">
-            <h3>
-                <i class="fas fa-graduation-cap"></i>
-                Menu Mahasiswa
-            </h3>
-            <ul class="sidebar-menu">
-                <li>
-                    <a href="dashboard_mahasiswa.php">
-                        <i class="fas fa-home"></i>
-                        Dashboard
-                    </a>
-                </li>
-                <li>
-                    <a href="input_emosi.php">
-                        <i class="fas fa-smile"></i>
-                        Input Emosi
-                    </a>
-                </li>
-                <li>
-                    <a href="tulis_curhat.php">
-                        <i class="fas fa-comment-dots"></i>
-                        Tulis Curhat
-                    </a>
-                </li>
-                <li>
-                    <a href="grafik_emosi.php">
-                        <i class="fas fa-chart-line"></i>
-                        Grafik Emosi
-                    </a>
-                </li>
-                <li>
-                    <a href="pilih_kelas.php">
-                        <i class="fas fa-chalkboard"></i>
-                        Pilih Kelas
-                    </a>
-                </li>
-                <li>
-                    <a href="kelas_saya.php" class="active">
-                        <i class="fas fa-book"></i>
-                        Kelas Saya
-                    </a>
-                </li>
-                <li>
-                    <a href="../login.php?logout=1">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Logout
-                    </a>
-                </li>
-            </ul>
+    <!-- Mobile Navbar -->
+    <div class="mobile-navbar d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-light me-2" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="text-white mb-0">SentiSyncEd</h4>
         </div>
         
-        <div class="main-content">
-            <h1 class="page-title">
-                <i class="fas fa-book"></i>
-                Kelas Saya
-            </h1>
+        <!-- Profile Dropdown for Mobile -->
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" id="mobileProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle me-1"></i>
+                <span class="d-none d-sm-inline"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Mahasiswa'); ?></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mobileProfileDropdown">
+                <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profil Saya</a></li>
+                <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-pencil-square me-2"></i>Edit Profil</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header text-center py-4 border-bottom" style="border-color: rgba(255,255,255,0.15) !important;">
+            <h2 class="mb-0" style="color:#fff; font-weight:700; font-size:24px;">SentiSyncEd</h2>
+        </div>
+        <nav class="nav flex-column py-3">
+            <a href="dashboard_mahasiswa.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-house me-2"></i> Dashboard
+            </a>
+            <a href="input_emosi.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-emoji-smile me-2"></i> Input Emosi
+            </a>
+            <a href="tulis_curhat.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-chat-dots me-2"></i> Tulis Curhat
+            </a>
+            <a href="grafik_emosi.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-bar-chart-line me-2"></i> Grafik Emosi
+            </a>
+            <a href="pilih_kelas.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-journal me-2"></i> Pilih Kelas
+            </a>
+            <a href="kelas_saya.php" class="nav-link d-flex align-items-center px-4 py-2 text-white active" style="font-size: 1.1rem;">
+                <i class="bi bi-book me-2"></i> Kelas Saya
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <!-- User Dropdown in Content Area -->
+    <div class="user-dropdown dropdown d-none d-lg-block">
+        <button class="btn dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-2"></i>
+            <?php echo htmlspecialchars($_SESSION['name'] ?? 'Mahasiswa'); ?>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-pencil-square me-2"></i>Edit Profil</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
+    </div>
+    
+    <div class="content-wrapper">
+        <div class="container-fluid px-0">
+            <h1 class="page-title mb-4">Kelas Saya</h1>
 
             <?php if ($success_message): ?>
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
                     <?php echo $success_message; ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             <?php endif; ?>
 
             <?php if ($error_message): ?>
-                <div class="alert alert-error">
-                    <i class="fas fa-exclamation-circle"></i>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
                     <?php echo $error_message; ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             <?php endif; ?>
 
             <?php if (empty($classes)): ?>
-                <div class="no-classes">
-                    <i class="fas fa-book-open"></i>
-                    <h3>Anda belum terdaftar di kelas manapun</h3>
-                    <a href="pilih_kelas.php">
-                        <i class="fas fa-plus"></i>
-                        Pilih Kelas
-                    </a>
+                <div class="card">
+                    <div class="card-body no-classes text-center py-5">
+                        <i class="bi bi-journal-x display-1 text-muted mb-3"></i>
+                        <h3 class="mb-4">Anda belum terdaftar di kelas manapun</h3>
+                        <a href="pilih_kelas.php" class="btn btn-primary btn-lg">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Pilih Kelas
+                        </a>
+                    </div>
                 </div>
             <?php else: ?>
-                <div class="classes-grid">
+                <div class="row g-4">
                     <?php foreach ($classes as $class): ?>
-                        <div class="class-card">
-                            <h3><?php echo htmlspecialchars($class['class_name']); ?></h3>
-                            
-                            <div class="class-info">
-                                <p>
-                                    <i class="fas fa-user-tie"></i>
-                                    <?php echo htmlspecialchars($class['dosen_name']); ?>
-                                </p>
-                                <p>
-                                    <i class="fas fa-users"></i>
-                                    <?php echo $class['student_count']; ?> mahasiswa terdaftar
-                                </p>
-                                <?php if ($class['description']): ?>
-                                    <p>
-                                        <i class="fas fa-info-circle"></i>
-                                        <?php echo htmlspecialchars($class['description']); ?>
-                                    </p>
-                                <?php endif; ?>
+                        <div class="col-lg-4 col-md-6">
+                            <div class="card class-card h-100">
+                                <div class="card-header bg-light border-primary">
+                                    <h5 class="card-title mb-0 text-primary fw-bold"><?php echo htmlspecialchars($class['class_name']); ?></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="class-info">
+                                        <p>
+                                            <i class="bi bi-person-badge"></i>
+                                            <span><?php echo htmlspecialchars($class['dosen_name']); ?></span>
+                                        </p>
+                                        <p>
+                                            <i class="bi bi-people"></i>
+                                            <span><?php echo $class['student_count']; ?> mahasiswa terdaftar</span>
+                                        </p>
+                                        <?php if ($class['description']): ?>
+                                            <p>
+                                                <i class="bi bi-info-circle"></i>
+                                                <span><?php echo htmlspecialchars($class['description']); ?></span>
+                                            </p>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <form method="POST" action="" onsubmit="return confirm('Apakah Anda yakin ingin keluar dari kelas ini?');">
+                                        <input type="hidden" name="class_id" value="<?php echo $class['id']; ?>">
+                                        <button type="submit" name="unenroll" class="btn btn-danger unenroll-btn">
+                                            <i class="bi bi-box-arrow-left me-2"></i>
+                                            Keluar dari Kelas
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
-
-                            <form method="POST" action="" onsubmit="return confirm('Apakah Anda yakin ingin keluar dari kelas ini?');">
-                                <input type="hidden" name="class_id" value="<?php echo $class['id']; ?>">
-                                <button type="submit" name="unenroll" class="unenroll-btn">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    Keluar dari Kelas
-                                </button>
-                            </form>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -330,8 +265,50 @@ try {
         </div>
     </div>
 
-    <footer class="copyright-footer">
-        <span>&copy; <?php echo date('Y'); ?> Rifky Najra Adipura. All rights reserved.</span>
-    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+
+    <script>
+        // Toggle sidebar on mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    overlay.classList.toggle('show');
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                });
+            }
+
+            // Close sidebar when a nav link is clicked on mobile
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 992) {
+                        sidebar.classList.remove('show');
+                        overlay.classList.remove('show');
+                    }
+                });
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                }
+            });
+        });
+    </script>
 </body>
+
 </html>
