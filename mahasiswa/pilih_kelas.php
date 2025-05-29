@@ -281,6 +281,16 @@ try {
         </div>
     </div>
 
+    <!-- Copyright Footer -->
+    <footer class="py-3 text-center text-muted border-top" style="position: fixed; bottom: 0; width: 100%; background-color: #f8f9fa; z-index: 1000;">
+        <div class="container">
+            <p class="mb-0">&copy; <?php echo date('Y'); ?> Rifky Najra Adipura. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <!-- Padding to prevent content from being hidden behind fixed footer -->
+    <div style="height: 60px;"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Toggle sidebar on mobile
