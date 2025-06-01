@@ -97,8 +97,49 @@ $emotion_alerts = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <?php include 'includes/head.php'; ?>
 </head>
 <body>
-    <div class="sidebar">
+    <!-- Mobile Navbar -->
+    <div class="mobile-navbar d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-light me-2" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="text-white mb-0">SentiSyncEd</h4>
+        </div>
+        
+        <!-- Profile Dropdown for Mobile -->
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" id="mobileProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle me-1"></i>
+                <span class="d-none d-sm-inline"><?php echo htmlspecialchars($dosen['name'] ?? 'Dosen'); ?></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mobileProfileDropdown">
+                <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profil Saya</a></li>
+                <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-pencil-square me-2"></i>Edit Profil</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
         <?php include 'sidebar.php'; ?>
+    </aside>
+
+    <!-- User Dropdown in Content Area -->
+    <div class="user-dropdown dropdown d-none d-lg-block">
+        <button class="btn dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-2"></i>
+            <?php echo htmlspecialchars($dosen['name'] ?? 'Dosen'); ?>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-pencil-square me-2"></i>Edit Profil</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
     </div>
 
     <div class="content-wrapper">
@@ -252,6 +293,11 @@ $emotion_alerts = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             $neutral_percent = round(($emotion_summary['neutral_count'] / $total) * 100, 1);
                             ?>
                             
+                            <!-- Chart Visualisasi Emosi -->
+                            <div class="mb-4 text-center">
+                                <canvas id="emotionChart" width="200" height="200"></canvas>
+                            </div>
+                            
                             <!-- Visualisasi Emosi dengan Progress Bar -->
                             <div class="mb-4">
                                 <!-- Senang -->
@@ -357,9 +403,61 @@ $emotion_alerts = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
+    <!-- Copyright Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="mb-0">&copy; <?php echo date('Y'); ?> Rifky Najra Adipura. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <!-- Padding to prevent content from being hidden behind fixed footer -->
+    <div style="height: 60px;"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
+    <script>
+        // Toggle sidebar on mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const navLinks = document.querySelectorAll('.sidebar .nav-link');
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    overlay.classList.toggle('show');
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                });
+            }
+
+            // Close sidebar when a nav link is clicked on mobile
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 992) {
+                        sidebar.classList.remove('show');
+                        overlay.classList.remove('show');
+                    }
+                });
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                }
+            });
+        });
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     
     <?php if (isset($emotion_summary) && !empty($emotion_summary['total_count'])): ?>
@@ -373,13 +471,9 @@ $emotion_alerts = $stmt->fetchAll(PDO::FETCH_ASSOC);
             if (typeof Chart !== 'undefined') {
                 try {
                     const emotionCtx = emotionCanvas.getContext('2d');
-                    // Hapus chart lama jika ada untuk mencegah duplikasi
-                    if (window.emotionChart) {
-                        window.emotionChart.destroy();
-                    }
                     
                     // Buat chart baru
-                    window.emotionChart = new Chart(emotionCtx, {
+                    new Chart(emotionCtx, {
                         type: 'pie',
                         data: {
                             labels: ['Senang', 'Stres', 'Lelah', 'Netral'],
