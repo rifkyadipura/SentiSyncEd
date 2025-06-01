@@ -28,7 +28,4 @@ function is_active($files) {
     <a href="daftar_curhat.php" class="nav-link d-flex align-items-center px-4 py-2 text-white <?php echo is_active('daftar_curhat.php'); ?>" style="font-size: 1.1rem;">
         <i class="bi bi-chat-dots me-2"></i> Daftar Curhat
     </a>
-    <a href="../login.php?logout=1" class="nav-link d-flex align-items-center px-4 py-2 text-white <?php echo is_active('logout.php'); ?>" style="font-size: 1.1rem;">
-        <i class="bi bi-box-arrow-right me-2"></i> Logout
-    </a>
 </nav>

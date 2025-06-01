@@ -21,22 +21,68 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <?php include 'includes/head.php'; ?>
 </head>
 <body>
-    <div class="sidebar">
+    <!-- Mobile Navbar -->
+    <div class="mobile-navbar d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-light me-2" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="text-white mb-0">SentiSyncEd</h4>
+        </div>
+        
+        <!-- Profile Dropdown for Mobile -->
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" id="mobileProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle me-1"></i>
+                <span class="d-none d-sm-inline"><?php echo htmlspecialchars($_SESSION['name'] ?? 'Dosen'); ?></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mobileProfileDropdown">
+                <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profil Saya</a></li>
+                <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-pencil-square me-2"></i>Edit Profil</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
         <?php include 'sidebar.php'; ?>
+    </aside>
+
+    <!-- User Dropdown in Content Area -->
+    <div class="user-dropdown dropdown d-none d-lg-block">
+        <button class="btn dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-2"></i>
+            <?php echo htmlspecialchars($_SESSION['name'] ?? 'Dosen'); ?>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-pencil-square me-2"></i>Edit Profil</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
     </div>
 
     <div class="content-wrapper">
-        <h1 class="page-title">Kelola Kelas</h1>
-        <div class="row mb-4">
-            <div class="col-12">
-                <a href="create_class.php" class="btn btn-primary mb-3"><i class="bi bi-plus-circle me-2"></i> Buat Kelas Baru</a>
+        <div class="container-fluid px-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="page-title">Kelola Kelas</h1>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">Daftar Kelas</div>
-                    <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <a href="create_class.php" class="btn btn-primary mb-3"><i class="bi bi-plus-circle me-2"></i> Buat Kelas Baru</a>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <span>Daftar Kelas</span>
+                        </div>
+                        <div class="card-body">
                         <?php if (empty($classes)): ?>
                             <p class="text-center">Anda belum memiliki kelas. Klik tombol "Buat Kelas Baru" untuk membuat kelas pertama Anda.</p>
                         <?php else: ?>
@@ -59,6 +105,7 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <?php endforeach; ?>
                             </div>
                         <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -87,8 +134,46 @@ $classes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     <?php endforeach; ?>
 
+    <!-- Copyright Footer -->
+    <footer class="py-3 text-center text-muted border-top" style="position: fixed; bottom: 0; width: 100%; background-color: #f8f9fa; z-index: 1000;">
+        <div class="container">
+            <p class="mb-0">&copy; <?php echo date('Y'); ?> Rifky Najra Adipura. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <!-- Padding to prevent content from being hidden behind fixed footer -->
+    <div style="height: 60px;"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            
+            // Toggle sidebar on mobile
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('show');
+                overlay.classList.toggle('show');
+            });
+            
+            // Close sidebar when overlay is clicked
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

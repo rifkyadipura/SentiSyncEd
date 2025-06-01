@@ -11,6 +11,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Dosen') {
 
 $dosen_id = $_SESSION['user_id'];
 
+// Get dosen info
+$stmt = $conn->prepare("SELECT name FROM users WHERE id = ? AND role = 'Dosen'");
+$stmt->execute([$_SESSION['user_id']]);
+$dosen = $stmt->fetch(PDO::FETCH_ASSOC);
+
 // Get classes for this dosen
 $stmt = $conn->prepare("SELECT id, class_name FROM classes WHERE dosen_id = ? ORDER BY class_name");
 $stmt->execute([$dosen_id]);
@@ -164,18 +169,122 @@ if ($session_id > 0) {
             background-color: #ffc107;
             color: #212529;
         }
+        
+        /* Mobile styles */
+        .mobile-navbar {
+            background-color: #4A90E2;
+            padding: 10px 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1020;
+            display: flex;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1025;
+            display: none;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        /* Mobile sidebar */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .content-wrapper {
+                margin-left: 0;
+                padding-top: 70px;
+            }
+            
+            .mobile-navbar {
+                display: flex;
+            }
+        }
+        
+        /* Desktop view */
+        @media (min-width: 992px) {
+            .content-wrapper {
+                margin-left: 250px;
+            }
+            
+            .sidebar {
+                transform: translateX(0);
+            }
+            
+            .mobile-navbar {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <?php include 'sidebar.php'; ?>
+    <!-- Mobile Navbar -->
+    <div class="mobile-navbar d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-light me-2" id="sidebarToggle">
+                <i class="bi bi-list"></i>
+            </button>
+            <h4 class="text-white mb-0">SentiSyncEd</h4>
+        </div>
+        
+        <!-- Profile Dropdown for Mobile -->
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" id="mobileProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle me-1"></i>
+                <span class="d-none d-sm-inline"><?php echo htmlspecialchars($dosen['name'] ?? 'Dosen'); ?></span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mobileProfileDropdown">
+                <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profil Saya</a></li>
+                <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-pencil-square me-2"></i>Edit Profil</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+        </div>
     </div>
+
+    <!-- Overlay for mobile sidebar -->
+    <div class="overlay" id="overlay"></div>
     
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <?php include 'sidebar.php'; ?>
+    </aside>
+
+    <!-- User Dropdown in Content Area -->
+    <div class="user-dropdown dropdown d-none d-lg-block">
+        <button class="btn dropdown-toggle d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-2"></i>
+            <?php echo htmlspecialchars($dosen['name'] ?? 'Dosen'); ?>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-pencil-square me-2"></i>Edit Profil</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+        </ul>
+    </div>
+
     <div class="content-wrapper">
         <h1 class="page-title">Grafik Emosi Mahasiswa</h1>
         
-        <div class="card filter-card">
-            <div class="card-header">Pilih Kelas dan Sesi</div>
+        <div class="card filter-card shadow-sm">
+            <div class="card-header bg-primary text-white">Pilih Kelas dan Sesi</div>
             <div class="card-body">
                 <form method="GET" action="" class="row g-3">
                     <div class="col-md-5">
@@ -242,7 +351,7 @@ if ($session_id > 0) {
             <?php if (!empty($emotions)): ?>
             <!-- Chart Type Selector -->
             <div class="card mt-4">
-                <div class="card-header">Pilih Jenis Grafik</div>
+                <div class="card-header bg-primary text-white">Pilih Jenis Grafik</div>
                 <div class="card-body">
                     <div class="btn-group w-100" role="group" aria-label="Chart type selector">
                         <button type="button" class="btn btn-primary active" id="lineChartBtn">Grafik Garis</button>
@@ -253,8 +362,8 @@ if ($session_id > 0) {
             </div>
             
             <!-- Line Chart -->
-            <div class="card mt-4" id="lineChartCard">
-                <div class="card-header">Grafik Garis Emosi</div>
+            <div class="card mt-4 shadow-sm" id="lineChartCard">
+                <div class="card-header bg-primary text-white">Grafik Garis Emosi</div>
                 <div class="card-body">
                     <div class="chart-container">
                         <canvas id="emotionLineChart"></canvas>
@@ -263,8 +372,8 @@ if ($session_id > 0) {
             </div>
             
             <!-- Pie Chart -->
-            <div class="card mt-4" id="pieChartCard" style="display: none;">
-                <div class="card-header">Distribusi Emosi (Grafik Lingkaran)</div>
+            <div class="card mt-4 shadow-sm" id="pieChartCard" style="display: none;">
+                <div class="card-header bg-primary text-white">Distribusi Emosi (Grafik Lingkaran)</div>
                 <div class="card-body">
                     <div class="chart-container">
                         <canvas id="emotionPieChart"></canvas>
@@ -273,8 +382,8 @@ if ($session_id > 0) {
             </div>
             
             <!-- Bar Chart -->
-            <div class="card mt-4" id="barChartCard" style="display: none;">
-                <div class="card-header">Emosi per Mahasiswa (Grafik Batang)</div>
+            <div class="card mt-4 shadow-sm" id="barChartCard" style="display: none;">
+                <div class="card-header bg-primary text-white">Emosi per Mahasiswa (Grafik Batang)</div>
                 <div class="card-body">
                     <div class="chart-container">
                         <canvas id="emotionBarChart"></canvas>
@@ -290,11 +399,38 @@ if ($session_id > 0) {
         <?php endif; ?>
     </div>
 
+    <!-- Copyright Footer -->
+    <footer class="py-3 text-center text-muted border-top" style="position: fixed; bottom: 0; width: 100%; background-color: #f8f9fa; z-index: 1000;">
+        <div class="container">
+            <p class="mb-0">&copy; <?php echo date('Y'); ?> Rifky Najra Adipura. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <!-- Padding to prevent content from being hidden behind fixed footer -->
+    <div style="height: 60px;"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <?php if (!empty($emotions)): ?>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Mobile sidebar toggle functionality
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        
+        if (sidebarToggle && sidebar && overlay) {
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            });
+            
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        }
+        
         // Chart switching functionality
         const lineChartBtn = document.getElementById('lineChartBtn');
         const pieChartBtn = document.getElementById('pieChartBtn');
@@ -573,5 +709,79 @@ if ($session_id > 0) {
     });
     </script>
     <?php endif; ?>
+    
+    <script>
+    // Sidebar toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const contentWrapper = document.querySelector('.content-wrapper');
+        
+        if (sidebarToggle && sidebar && overlay) {
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                
+                // Adjust content margin when sidebar is toggled
+                if (window.innerWidth > 768) {
+                    if (sidebar.classList.contains('active')) {
+                        contentWrapper.style.marginLeft = '0';
+                    } else {
+                        contentWrapper.style.marginLeft = '250px';
+                    }
+                }
+            });
+            
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                
+                // Restore content margin when sidebar is closed on mobile
+                if (window.innerWidth > 768) {
+                    contentWrapper.style.marginLeft = '250px';
+                }
+            });
+        }
+        
+        // Responsive content adjustment on window resize
+        window.addEventListener('resize', function() {
+            if (contentWrapper) {
+                if (window.innerWidth <= 768) {
+                    contentWrapper.style.marginLeft = '0';
+                } else {
+                    if (!sidebar || !sidebar.classList.contains('active')) {
+                        contentWrapper.style.marginLeft = '250px';
+                    }
+                }
+            }
+        });
+        
+        // Initialize chart button styling
+        const chartButtons = document.querySelectorAll('.chart-type-selector .btn');
+        chartButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                chartButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Check for emotion alerts every 60 seconds
+        setInterval(function() {
+            checkEmotionAlerts();
+        }, 60000);
+        
+        // Initial check after 5 seconds
+        setTimeout(function() {
+            checkEmotionAlerts();
+        }, 5000);
+    });
+    
+    // Function to check for new emotion alerts
+    function checkEmotionAlerts() {
+        // This is a placeholder for the actual emotion alert checking functionality
+        console.log('Checking for emotion alerts...');
+    }
+    </script>
 </body>
 </html>

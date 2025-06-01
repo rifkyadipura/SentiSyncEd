@@ -404,7 +404,7 @@ $emotion_alerts = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <!-- Copyright Footer -->
-    <footer class="footer">
+    <footer class="py-3 text-center text-muted border-top" style="position: fixed; bottom: 0; width: 100%; background-color: #f8f9fa; z-index: 1000;">
         <div class="container">
             <p class="mb-0">&copy; <?php echo date('Y'); ?> Rifky Najra Adipura. All rights reserved.</p>
         </div>
