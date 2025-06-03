@@ -119,18 +119,13 @@
             margin-top: 5px;
             font-size: 13px;
         }
-        #emotionAlertSound {
-            display: none;
-        }
+
     </style>
     
-    <!-- Emotion Alert System Audio -->
-    <audio id="emotionAlertSound" preload="auto">
-        <source src="../assets/notification.mp3" type="audio/mpeg">
-    </audio>
+
     
     <!-- Emotion Alert System JavaScript -->
-    <script>
+    <!-- <script>
         // Variables to track alerts
         let lastAlertCount = 0;
         let lastAlertIds = [];
@@ -155,11 +150,7 @@
                             updateAlertsContainer(response.alerts, hasNewAlerts);
                         }
                         
-                        // Play sound and show browser notification for new alerts
-                        if (hasNewAlerts && response.count > 0) {
-                            playAlertSound();
-                            showBrowserNotification(response.alerts[0]);
-                        }
+                        // Update UI for new alerts (no sound or browser notification)
                         
                         // Update tracking variables
                         lastAlertCount = response.count;
@@ -218,59 +209,12 @@
             container.html(html);
         }
         
-        // Function to play alert sound
-        function playAlertSound() {
-            const sound = document.getElementById('emotionAlertSound');
-            if (sound) {
-                sound.play().catch(e => console.log('Error playing sound:', e));
-            }
-        }
         
-        // Function to show browser notification
-        function showBrowserNotification(alert) {
-            // Check if browser notifications are supported and permitted
-            if (!('Notification' in window)) {
-                console.log('Browser does not support notifications');
-                return;
-            }
-            
-            if (Notification.permission === 'granted') {
-                createNotification(alert);
-            } else if (Notification.permission !== 'denied') {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        createNotification(alert);
-                    }
-                });
-            }
-        }
-        
-        // Function to create notification
-        function createNotification(alert) {
-            const title = 'Peringatan Emosi SentiSyncEd';
-            const options = {
-                body: `${alert.negative_percentage}% emosi negatif terdeteksi di kelas ${alert.class_name}`,
-                icon: '../assets/notification-icon.png'
-            };
-            
-            const notification = new Notification(title, options);
-            
-            // Close notification after 5 seconds
-            setTimeout(() => notification.close(), 5000);
-            
-            // Handle click on notification
-            notification.onclick = function() {
-                window.focus();
-                $('#emotionAlertsDropdown').dropdown('show');
-            };
-        }
+
         
         // Initialize emotion alert system when document is ready
         $(document).ready(function() {
-            // Request permission for browser notifications
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
+
             
             // Check for alerts immediately
             checkEmotionAlerts();
@@ -308,4 +252,4 @@
                 }
             });
         });
-    </script>
+    </script> -->
