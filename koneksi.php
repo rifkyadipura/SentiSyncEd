@@ -1,7 +1,7 @@
 <?php
 // Database connection configuration
 $host = 'localhost';
-$dbname = 'sentisynced';
+$dbname = 'sentisynced_db';
 $username = 'root';
 $password = '';
 

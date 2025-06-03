@@ -1,6 +1,6 @@
 -- Create database
-CREATE DATABASE IF NOT EXISTS sentisynced;
-USE sentisynced;
+CREATE DATABASE IF NOT EXISTS sentisynced_db;
+USE sentisynced_db;
 
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
