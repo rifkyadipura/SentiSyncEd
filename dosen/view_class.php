@@ -396,6 +396,10 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <div class="mt-2 small fst-italic">
                                             Mahasiswa: ${alert.affected_students}
                                         </div>
+                                        <div class="mt-3 p-2 bg-light border rounded">
+                                            <strong>Rekomendasi untuk Dosen:</strong><br>
+                                            <span class="text-dark">${getEmotionRecommendation(alert.negative_percentage)}</span>
+                                        </div>
                                     </div>
                                 `;
                             });
@@ -535,6 +539,10 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <div class="mt-2 small fst-italic">
                                             Mahasiswa: ${alert.affected_students}
                                         </div>
+                                        <div class="mt-3 p-2 bg-light border rounded">
+                                            <strong>Rekomendasi untuk Dosen:</strong><br>
+                                            <span class="text-dark">${getEmotionRecommendation(alert.negative_percentage)}</span>
+                                        </div>
                                     </div>
                                 `;
                             });
@@ -552,6 +560,19 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 });
             }
         });
+    }
+
+    // Fungsi rekomendasi berdasarkan persentase emosi negatif
+    function getEmotionRecommendation(percentage) {
+        if (percentage >= 60) {
+            return "Kondisi kelas sangat tidak kondusif. Segera lakukan jeda, diskusi terbuka, atau pertimbangkan konseling.";
+        } else if (percentage >= 40) {
+            return "Segera ajak mahasiswa berdiskusi, tanyakan kendala, dan berikan dukungan emosional.";
+        } else if (percentage >= 20) {
+            return "Perhatikan kondisi kelas, lakukan ice breaking atau tanyakan perasaan mahasiswa.";
+        } else {
+            return "Kondisi kelas cukup baik. Tetap pantau dan jaga komunikasi dengan mahasiswa.";
+        }
     }
 
     $(document).ready(function() {
