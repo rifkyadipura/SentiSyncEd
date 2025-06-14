@@ -160,6 +160,12 @@ try {
             <a href="dashboard_mahasiswa.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
                 <i class="bi bi-house me-2"></i> Dashboard
             </a>
+            <a href="pilih_kelas.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-journal me-2"></i> Pilih Kelas
+            </a>
+            <a href="kelas_saya.php" class="nav-link d-flex align-items-center px-4 py-2 text-white active" style="font-size: 1.1rem;">
+                <i class="bi bi-book me-2"></i> Kelas Saya
+            </a>
             <a href="input_emosi.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
                 <i class="bi bi-emoji-smile me-2"></i> Input Emosi
             </a>
@@ -168,12 +174,6 @@ try {
             </a>
             <a href="grafik_emosi.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
                 <i class="bi bi-bar-chart-line me-2"></i> Grafik Emosi
-            </a>
-            <a href="pilih_kelas.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
-                <i class="bi bi-journal me-2"></i> Pilih Kelas
-            </a>
-            <a href="kelas_saya.php" class="nav-link d-flex align-items-center px-4 py-2 text-white active" style="font-size: 1.1rem;">
-                <i class="bi bi-book me-2"></i> Kelas Saya
             </a>
         </nav>
     </div>
