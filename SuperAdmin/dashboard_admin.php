@@ -297,21 +297,15 @@ $recentUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </a>
             </li>
             <li>
-                <a href="#" class="nav-link text-white">
+                <a href="manage_kelas.php" class="nav-link text-white">
                     <i class="bi bi-journal-text"></i>
                     Kelola Kelas
                 </a>
             </li>
             <li>
-                <a href="#" class="nav-link text-white">
+                <a href="analisis_emosi.php" class="nav-link text-white">
                     <i class="bi bi-emoji-smile"></i>
                     Analisis Emosi
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link text-white">
-                    <i class="bi bi-gear"></i>
-                    Pengaturan
                 </a>
             </li>
         </ul>
@@ -340,32 +334,9 @@ $recentUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="d-none d-md-flex">
             <h4 class="mb-0">Dashboard SuperAdmin</h4>
         </div>
-        <div class="d-flex">
-            <div class="position-relative">
-                <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-bell fs-5"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        3
-                    </span>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="alertsDropdown">
-                    <h6 class="dropdown-header">
-                        Notifikasi
-                    </h6>
-                    <a class="dropdown-item d-flex align-items-center" href="#">
-                        <div class="me-3">
-                            <div class="icon-circle bg-primary">
-                                <i class="bi bi-person-plus text-white"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="small text-gray-500">12 Juni 2025</div>
-                            <span>Dosen baru telah mendaftar!</span>
-                        </div>
-                    </a>
-                    <a class="dropdown-item text-center small text-gray-500" href="#">Tampilkan Semua Notifikasi</a>
-                </div>
-            </div>
+        <!-- Brand text only on mobile -->
+        <div class="d-flex d-md-none">
+            <span class="fw-semibold text-primary">SentiSyncEd</span>
         </div>
     </div>
 

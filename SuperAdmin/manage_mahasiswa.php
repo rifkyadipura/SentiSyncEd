@@ -385,21 +385,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'view' && isset($_GET['id'])) 
                 </a>
             </li>
             <li>
-                <a href="#" class="nav-link text-white">
+                <a href="manage_kelas.php" class="nav-link text-white">
                     <i class="bi bi-journal-text"></i>
                     Kelola Kelas
                 </a>
             </li>
             <li>
-                <a href="#" class="nav-link text-white">
+                <a href="analisis_emosi.php" class="nav-link text-white">
                     <i class="bi bi-emoji-smile"></i>
                     Analisis Emosi
-                </a>
-            </li>
-            <li>
-                <a href="#" class="nav-link text-white">
-                    <i class="bi bi-gear"></i>
-                    Pengaturan
                 </a>
             </li>
         </ul>
