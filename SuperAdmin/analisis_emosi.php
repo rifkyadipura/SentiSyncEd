@@ -95,15 +95,9 @@ $chartColors = [
     <div class="topbar d-flex align-items-center justify-content-between">
         <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggle"><i class="bi bi-list"></i></button>
         <div class="d-none d-md-flex"><h4 class="mb-0">Analisis Emosi</h4></div>
-        <div class="d-flex">
-            <div class="position-relative">
-                <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-bell fs-5"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span></a>
-                <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="alertsDropdown"><h6 class="dropdown-header">Notifikasi</h6><div class="dropdown-item text-center small text-gray-500">Belum ada notifikasi</div></div>
-            </div>
-            <div class="dropdown ms-3">
-                <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false"><span class="avatar bg-light me-2"><i class="bi bi-person"></i></span><span class="d-none d-lg-inline text-gray-600 small"><?php echo htmlspecialchars($_SESSION['name']); ?></span></a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown"><li><a class="dropdown-item" href="../login.php?logout=1">Logout</a></li></ul>
-            </div>
+        <!-- Brand text only on mobile -->
+        <div class="d-flex d-md-none">
+            <span class="fw-semibold text-primary">SentiSyncEd</span>
         </div>
     </div>
 

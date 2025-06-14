@@ -422,12 +422,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'view' && isset($_GET['id'])) 
         <div class="d-none d-md-flex">
             <h4 class="mb-0">Kelola Mahasiswa</h4>
         </div>
-        <div class="d-flex">
-            <div class="position-relative">
-                <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-bell fs-5"></i>
-                </a>
-            </div>
+        <!-- Brand text only on mobile -->
+        <div class="d-flex d-md-none">
+            <span class="fw-semibold text-primary">SentiSyncEd</span>
         </div>
     </div>
 
