@@ -13,10 +13,10 @@ $message = '';
 $error = '';
 
 // Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
-    $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
-    $password = $_POST['password'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['edit_id'])) {
+    $name = isset($_POST['name']) ? filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING) : '';
+    $email = isset($_POST['email']) ? filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL) : '';
+    $password = $_POST['password'] ?? '';
     
     // Validate input
     if (empty($name) || empty($email) || empty($password)) {
@@ -43,8 +43,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get list of all dosen
-$stmt = $conn->query("SELECT id, name, email FROM users WHERE role = 'Dosen' ORDER BY name");
+// ---------- ACTION HANDLERS ---------- //
+// 1. Ajax request for detail
+if (isset(
+        $_GET['action']) && $_GET['action'] === 'detail' && isset($_GET['id'])) {
+    $id = (int) $_GET['id'];
+    $stmt = $conn->prepare("SELECT id, name, email, created_at FROM users WHERE id = ? AND role = 'Dosen'");
+    $stmt->execute([$id]);
+    $dosen = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($dosen) {
+        // get classes taught
+        $kelasStmt = $conn->prepare("SELECT id, class_name FROM classes WHERE dosen_id = ? ORDER BY class_name");
+        $kelasStmt->execute([$id]);
+        $dosen['classes'] = $kelasStmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    header('Content-Type: application/json');
+    echo json_encode($dosen ?: []);
+    exit();
+}
+
+// 2. Delete lecturer
+if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
+    $id = (int) $_GET['id'];
+    try {
+        $check = $conn->prepare("SELECT COUNT(*) FROM classes WHERE dosen_id = ?");
+        $check->execute([$id]);
+        if ($check->fetchColumn() > 0) {
+            $error = 'Dosen masih memiliki kelas terdaftar dan tidak dapat dihapus';
+        } else {
+            $del = $conn->prepare("DELETE FROM users WHERE id = ? AND role = 'Dosen'");
+            $del->execute([$id]);
+            $message = 'Dosen berhasil dihapus';
+            logAction($conn, $_SESSION['user_id'], "Deleted dosen #$id");
+        }
+    } catch (PDOException $e) {
+        $error = 'Gagal menghapus dosen: ' . $e->getMessage();
+    }
+}
+
+// 3. Update lecturer (from edit modal)
+if (isset($_POST['edit_id'])) {
+    $editId  = (int) $_POST['edit_id'];
+    $name    = filter_input(INPUT_POST, 'edit_name', FILTER_SANITIZE_STRING);
+    $email   = filter_input(INPUT_POST, 'edit_email', FILTER_SANITIZE_EMAIL);
+    $pwdRaw  = $_POST['edit_password'] ?? '';
+    try {
+        $upd = $conn->prepare("UPDATE users SET name = ?, email = ? WHERE id = ? AND role = 'Dosen'");
+        $upd->execute([$name, $email, $editId]);
+        if (!empty($pwdRaw)) {
+            $hashed = password_hash($pwdRaw, PASSWORD_DEFAULT);
+            $pwd = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $pwd->execute([$hashed, $editId]);
+        }
+        $message = 'Data dosen berhasil diperbarui';
+        logAction($conn, $_SESSION['user_id'], "Updated dosen #$editId");
+    } catch (PDOException $e) {
+        $error = 'Gagal memperbarui dosen: ' . $e->getMessage();
+    }
+}
+
+// ---------- FETCH LIST ---------- //
+// Ambil daftar dosen beserta jumlah kelas yang mereka ampu
+$stmt = $conn->query("SELECT u.id, u.name, u.email, COUNT(c.id) AS total_kelas FROM users u LEFT JOIN classes c ON c.dosen_id = u.id WHERE u.role = 'Dosen' GROUP BY u.id ORDER BY u.name");
 $dosenList = $stmt->fetchAll();
 ?>
 
@@ -290,14 +350,16 @@ $dosenList = $stmt->fetchAll();
                         </div>
                         <div class="card-body">
                             <?php if ($message): ?>
-                                <div class="alert alert-success">
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <?= htmlspecialchars($message) ?>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             <?php endif; ?>
                             
                             <?php if ($error): ?>
-                                <div class="alert alert-danger">
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                     <?= htmlspecialchars($error) ?>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                 </div>
                             <?php endif; ?>
 
@@ -377,9 +439,9 @@ $dosenList = $stmt->fetchAll();
                                                             <i class="bi bi-three-dots-vertical"></i>
                                                         </button>
                                                         <ul class="dropdown-menu">
-                                                            <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-1"></i> Lihat Detail</a></li>
-                                                            <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-1"></i> Edit</a></li>
-                                                            <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-1"></i> Hapus</a></li>
+                                                            <li><a class="dropdown-item view-detail" href="#" data-id="<?= $dosen['id'] ?>"><i class="bi bi-eye me-1"></i> Lihat Detail</a></li>
+                                                            <li><a class="dropdown-item edit-dosen" href="#" data-id="<?= $dosen['id'] ?>"><i class="bi bi-pencil me-1"></i> Edit</a></li>
+                                                            <li><a class="dropdown-item text-danger delete-dosen" href="manage_dosen.php?action=delete&id=<?= $dosen['id'] ?>" onclick="return confirm('Yakin ingin menghapus dosen ini?');"><i class="bi bi-trash me-1"></i> Hapus</a></li>
                                                         </ul>
                                                     </div>
                                                 </td>
@@ -458,6 +520,111 @@ $dosenList = $stmt->fetchAll();
                 });
             });
         });
-    </script>
+    // ---- Modal detail & edit handler ---- //
+</script>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Detail Dosen</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Nama:</strong> <span id="detailName"></span></p>
+        <p><strong>Email:</strong> <span id="detailEmail"></span></p>
+        <p><strong>Tanggal Registrasi:</strong> <span id="detailCreated"></span></p>
+        <hr>
+        <h6>Kelas yang Diampu</h6>
+        <ul id="detailClasses" class="list-group"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" class="needs-validation" novalidate>
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Dosen</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="edit_id" id="editId">
+          <div class="mb-3">
+            <label class="form-label">Nama</label>
+            <input type="text" class="form-control" name="edit_name" id="editName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" name="edit_email" id="editEmail" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password Baru (opsional)</label>
+            <input type="password" class="form-control" name="edit_password" id="editPassword">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Event handlers for detail & edit dropdown actions
+ document.addEventListener('DOMContentLoaded', function(){
+   const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+   const editModal   = new bootstrap.Modal(document.getElementById('editModal'));
+
+   document.querySelectorAll('.view-detail').forEach(function(el){
+      el.addEventListener('click', function(e){
+         e.preventDefault();
+         const id = this.dataset.id;
+         fetch('manage_dosen.php?action=detail&id='+id)
+           .then(r=>r.json())
+           .then(function(d){
+              document.getElementById('detailName').textContent    = d.name;
+              document.getElementById('detailEmail').textContent   = d.email;
+              document.getElementById('detailCreated').textContent = d.created_at;
+              const list = document.getElementById('detailClasses');
+              list.innerHTML = '';
+              if (d.classes && d.classes.length){
+                 d.classes.forEach(function(c){
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.textContent = c.class_name;
+                    list.appendChild(li);
+                 });
+              } else {
+                 list.innerHTML = '<li class="list-group-item">Belum ada kelas</li>';
+              }
+              detailModal.show();
+           });
+      });
+   });
+
+   document.querySelectorAll('.edit-dosen').forEach(function(el){
+      el.addEventListener('click', function(e){
+         e.preventDefault();
+         const id = this.dataset.id;
+         fetch('manage_dosen.php?action=detail&id='+id)
+           .then(r=>r.json())
+           .then(function(d){
+              document.getElementById('editId').value    = d.id;
+              document.getElementById('editName').value  = d.name;
+              document.getElementById('editEmail').value = d.email;
+              document.getElementById('editPassword').value = '';
+              editModal.show();
+           });
+      });
+   });
+ });
+</script>
+
 </body>
 </html>
