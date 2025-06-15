@@ -209,6 +209,14 @@ $recentUsers = $stmt->fetchAll(PDO::FETCH_ASSOC);
             color: #6c757d;
         }
         
+        /* scrollable recent activity list */
+        .activity-feed{
+            max-height:350px;
+            overflow-y:auto;
+        }
+        .activity-feed::-webkit-scrollbar{width:6px;}
+        .activity-feed::-webkit-scrollbar-thumb{background:#c1c1c1;border-radius:3px;}
+        
         .dropdown-menu {
             box-shadow: 0 0.15rem 1.75rem rgba(33, 40, 50, 0.15);
             border: none;
