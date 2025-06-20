@@ -316,8 +316,7 @@ $dosenList = $stmt->fetchAll();
                 <strong><?= htmlspecialchars($_SESSION['name']) ?></strong>
             </a>
             <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
-                <li><a class="dropdown-item" href="#">Profil</a></li>
-                <li><a class="dropdown-item" href="#">Pengaturan</a></li>
+                <li><a class="dropdown-item" href="edit_profile.php">Edit Profil</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="../login.php?logout=1">Logout</a></li>
             </ul>

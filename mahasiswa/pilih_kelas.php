@@ -201,6 +201,8 @@ try {
             <?php echo htmlspecialchars($_SESSION['name'] ?? 'Mahasiswa'); ?>
         </button>
         <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="edit_profile.php"><i class="bi bi-pencil-square me-2"></i>Edit Profil</a></li>
+            <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="../login.php?logout=1"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
         </ul>
     </div>
