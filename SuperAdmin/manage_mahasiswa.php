@@ -14,7 +14,7 @@ $error = '';
 
 // Handle form submission for adding new mahasiswa
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add') {
-    $name = filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING);
+    $name = htmlspecialchars(trim($_POST['name'] ?? ''), ENT_QUOTES, 'UTF-8');
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
     $password = $_POST['password'];
     
@@ -93,7 +93,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
 // Handle mahasiswa update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update') {
     $mahasiswaId = (int)$_POST['mahasiswa_id'];
-    $name = filter_input(INPUT_POST, 'edit_name', FILTER_SANITIZE_STRING);
+    $name = htmlspecialchars(trim($_POST['edit_name'] ?? ''), ENT_QUOTES, 'UTF-8');
     $email = filter_input(INPUT_POST, 'edit_email', FILTER_SANITIZE_EMAIL);
     $password = $_POST['edit_password'];
     
