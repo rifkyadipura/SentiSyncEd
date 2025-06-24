@@ -1,0 +1,30 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/var/www/html
+      - ./apache-config.conf:/etc/apache2/sites-available/000-default.conf
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_USER=sentisyncuser
+      - DB_PASSWORD=sentisyncpassword
+      - DB_NAME=sentisyncdb
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: sentisyncdb
+      MYSQL_USER: sentisyncuser
+      MYSQL_PASSWORD: sentisyncpassword
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database.sql:/docker-entrypoint-initdb.d/database.sql
+
+volumes:
+  db_data:
