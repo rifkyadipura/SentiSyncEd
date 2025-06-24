@@ -14,7 +14,7 @@ $error = '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['edit_id'])) {
-    $name = isset($_POST['name']) ? filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING) : '';
+    $name = isset($_POST['name']) ? htmlspecialchars(trim($_POST['name']), ENT_QUOTES, 'UTF-8') : '';
     $email = isset($_POST['email']) ? filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL) : '';
     $password = $_POST['password'] ?? '';
     
@@ -84,7 +84,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
 // 3. Update lecturer (from edit modal)
 if (isset($_POST['edit_id'])) {
     $editId  = (int) $_POST['edit_id'];
-    $name    = filter_input(INPUT_POST, 'edit_name', FILTER_SANITIZE_STRING);
+    $name    = htmlspecialchars(trim($_POST['edit_name'] ?? ''), ENT_QUOTES, 'UTF-8');
     $email   = filter_input(INPUT_POST, 'edit_email', FILTER_SANITIZE_EMAIL);
     $pwdRaw  = $_POST['edit_password'] ?? '';
     try {

@@ -2,12 +2,15 @@
 require_once 'koneksi.php';
 
 try {
+    // Get database name from environment or use default
+    $dbname = getenv('DB_NAME') ?: 'sentisyncdb';
+    
     // Drop existing database
-    $conn->exec("DROP DATABASE IF EXISTS sentisynced");
+    $conn->exec("DROP DATABASE IF EXISTS $dbname");
     
     // Create and use database
-    $conn->exec("CREATE DATABASE IF NOT EXISTS sentisynced");
-    $conn->exec("USE sentisynced");
+    $conn->exec("CREATE DATABASE IF NOT EXISTS $dbname");
+    $conn->exec("USE $dbname");
     
     // Read and execute SQL file
     $sql = file_get_contents('database.sql');

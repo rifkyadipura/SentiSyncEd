@@ -29,7 +29,8 @@ try {
 
 // Handle support note submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $message = filter_input(INPUT_POST, 'message', FILTER_SANITIZE_STRING);
+    // Use htmlspecialchars instead of the deprecated FILTER_SANITIZE_STRING
+    $message = htmlspecialchars(trim($_POST['message'] ?? ''), ENT_QUOTES, 'UTF-8');
     $class_id = filter_input(INPUT_POST, 'class_id', FILTER_SANITIZE_NUMBER_INT);
     $user_id = $_SESSION['user_id'];
     

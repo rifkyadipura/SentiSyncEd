@@ -34,7 +34,7 @@ try {
 
 // Handle emotion submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $emotion = filter_input(INPUT_POST, 'emotion', FILTER_SANITIZE_STRING);
+    $emotion = htmlspecialchars(trim($_POST['emotion'] ?? ''), ENT_QUOTES, 'UTF-8');
     $class_session_id = filter_input(INPUT_POST, 'class_session_id', FILTER_SANITIZE_NUMBER_INT);
     
     // Verify session exists and is active for this student

@@ -1,9 +1,9 @@
 <?php
 // Database connection configuration
-$host = 'localhost';
-$dbname = 'sentisynced_db';
-$username = 'root';
-$password = '';
+$host = getenv('DB_HOST') ?: 'localhost';
+$dbname = getenv('DB_NAME') ?: 'sentisyncdb';
+$username = getenv('DB_USER') ?: 'root';
+$password = getenv('DB_PASSWORD') ?: '';
 
 try {
     $conn = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
