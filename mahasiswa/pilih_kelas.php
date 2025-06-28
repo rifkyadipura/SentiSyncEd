@@ -190,6 +190,9 @@ try {
             <a href="grafik_emosi.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
                 <i class="bi bi-bar-chart-line me-2"></i> Grafik Emosi
             </a>
+            <a href="panduan.php" class="nav-link d-flex align-items-center px-4 py-2 text-white" style="font-size: 1.1rem;">
+                <i class="bi bi-question-circle me-2"></i> Panduan Penggunaan
+            </a>
         </nav>
     </div>
 
