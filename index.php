@@ -440,10 +440,13 @@
         .hero-section {
             background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
             color: white;
-            padding: 5rem 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
             position: relative;
             overflow: hidden;
             width: 100%;
+            padding: 2rem 0;
         }
         
         @media (min-width: 768px) {
@@ -454,8 +457,9 @@
 
         .hero-content {
             max-width: 1200px;
+            width: 100%;
             margin: 0 auto;
-            padding: 4rem 2rem;
+            padding: 2rem;
             text-align: center;
             position: relative;
             z-index: 2;
@@ -715,7 +719,7 @@
             <div style="background: white; border-radius: 15px; padding: 3rem; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: inline-block; max-width: 800px;">
                 <div style="width: 150px; height: 150px; border-radius: 50%; background: #e0e0e0; margin: 0 auto 2rem; overflow: hidden;">
                     <!-- Placeholder for profile image -->
-                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #4A90E2; color: white; font-size: 3rem;">RN</div>
+                    <img src="assets/images/profile/foto-diri.jpg" alt="Foto Diri" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                 </div>
                 <h3 style="color: #2c3e50; font-size: 1.8rem; margin-bottom: 1rem;">Rifky Najra Adipura</h3>
                 <p style="color: #666; font-style: italic; margin-bottom: 1.5rem;">Pengembang & Pendiri SentiSyncEd</p>
@@ -732,20 +736,25 @@
                     </p>
                 </div>
                 
-                <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;
-                     flex-wrap: wrap;">
-                    <a href="#" style="color: #4A90E2; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
-                        <i class="fab fa-github" style="font-size: 1.2rem;"></i> GitHub
-                    </a>
-                    <span style="color: #ddd;">•</span>
-                    <a href="#" style="color: #4A90E2; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
-                        <i class="fab fa-linkedin" style="font-size: 1.2rem;"></i> LinkedIn
-                    </a>
-                    <span style="color: #ddd;">•</span>
-                    <a href="#" style="color: #4A90E2; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
-                        <i class="fas fa-envelope" style="font-size: 1.2rem;"></i> Email
-                    </a>
-                </div>
+                <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+                <a href="https://github.com/rifkyadipura" 
+                target="_blank" rel="noopener noreferrer" 
+                style="color: #4A90E2; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <i class="fab fa-github" style="font-size: 1.2rem;"></i> GitHub
+                </a>
+                <span style="color: #ddd;">•</span>
+                <a href="https://www.linkedin.com/in/rifkynajraadipura" 
+                target="_blank" rel="noopener noreferrer" 
+                style="color: #4A90E2; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <i class="fab fa-linkedin" style="font-size: 1.2rem;"></i> LinkedIn
+                </a>
+                <span style="color: #ddd;">•</span>
+                <a href="mailto:rifkyadipura@gmail.com" 
+                target="_blank" rel="noopener noreferrer" 
+                style="color: #4A90E2; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-envelope" style="font-size: 1.2rem;"></i> Email
+                </a>
+            </div>
             </div>
         </div>
     </section>
@@ -763,55 +772,6 @@
                     <p style="line-height: 1.7; opacity: 0.8; margin-bottom: 1.5rem;">
                         Platform inovatif untuk memantau dan memahami kondisi emosional mahasiswa selama proses pembelajaran berlangsung.
                     </p>
-                    <div class="social-links" style="display: flex; gap: 1rem;">
-                        <a href="#" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; transition: var(--transition);">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; transition: var(--transition);">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; transition: var(--transition);">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="#" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; transition: var(--transition);">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Quick Links -->
-                <div class="footer-links">
-                    <h4 style="color: #fff; margin-top: 0; margin-bottom: 1.5rem; font-size: 1.2rem; position: relative; padding-bottom: 0.8rem;">
-                        <span style="display: inline-block; position: relative;">Tautan Cepat
-                            <span style="position: absolute; bottom: -8px; left: 0; width: 40px; height: 2px; background: #4A90E2;"></span>
-                        </span>
-                    </h4>
-                    <ul style="list-style: none; padding: 0; margin: 0;">
-                        <li style="margin-bottom: 0.8rem;">
-                            <a href="#" style="color: #ecf0f1; text-decoration: none; transition: var(--transition); display: flex; align-items: center;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 0.7rem; color: #4A90E2;"></i>
-                                Beranda
-                            </a>
-                        </li>
-                        <li style="margin-bottom: 0.8rem;">
-                            <a href="#" style="color: #ecf0f1; text-decoration: none; transition: var(--transition); display: flex; align-items: center;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 0.7rem; color: #4A90E2;"></i>
-                                Tentang Kami
-                            </a>
-                        </li>
-                        <li style="margin-bottom: 0.8rem;">
-                            <a href="#" style="color: #ecf0f1; text-decoration: none; transition: var(--transition); display: flex; align-items: center;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 0.7rem; color: #4A90E2;"></i>
-                                Fitur
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" style="color: #ecf0f1; text-decoration: none; transition: var(--transition); display: flex; align-items: center;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 0.7rem; color: #4A90E2;"></i>
-                                FAQ
-                            </a>
-                        </li>
-                    </ul>
                 </div>
 
                 <!-- Contact Info -->
@@ -825,46 +785,22 @@
                         <li style="margin-bottom: 1.2rem; display: flex; align-items: flex-start;">
                             <i class="fas fa-map-marker-alt" style="color: #4A90E2; margin-right: 12px; margin-top: 4px;"></i>
                             <span style="opacity: 0.9; line-height: 1.6;">
-                                Jl. Pendidikan No. 123, Bandung, Jawa Barat, Indonesia
+                                Jl. Sariasih No.54, Sarijadi, Kec. Sukasari, Kota Bandung, Jawa Barat 40151
                             </span>
                         </li>
                         <li style="margin-bottom: 1.2rem; display: flex; align-items: center;">
                             <i class="fas fa-envelope" style="color: #4A90E2; margin-right: 12px;"></i>
                             <a href="mailto:info@sentisynced.com" style="color: #ecf0f1; text-decoration: none; opacity: 0.9; transition: opacity 0.3s ease;">
-                                info@sentisynced.com
+                                rifkyadipura@gmail.com
                             </a>
                         </li>
                         <li style="margin-bottom: 1.2rem; display: flex; align-items: center;">
                             <i class="fas fa-phone-alt" style="color: #4A90E2; margin-right: 12px;"></i>
                             <a href="tel:+622112345678" style="color: #ecf0f1; text-decoration: none; opacity: 0.9; transition: opacity 0.3s ease;">
-                                +62 21 1234 5678
+                                +62 896-5714-0789
                             </a>
                         </li>
                     </ul>
-                </div>
-
-                <!-- Newsletter -->
-                <div class="footer-newsletter">
-                    <h4 style="color: #fff; margin-top: 0; margin-bottom: 1.5rem; font-size: 1.2rem; position: relative; padding-bottom: 0.8rem;">
-                        <span style="display: inline-block; position: relative;">
-                            Newsletter
-                            <span style="position: absolute; bottom: -8px; left: 0; width: 40px; height: 2px; background: #4A90E2;"></span>
-                        </span>
-                    </h4>
-                    <p style="opacity: 0.8; margin-bottom: 1.5rem; line-height: 1.6;">
-                        Berlangganan newsletter kami untuk mendapatkan pembaruan terbaru tentang fitur dan pembaruan aplikasi.
-                    </p>
-                    <form action="#" method="POST" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
-                        <input type="email" name="email" placeholder="Alamat email Anda" required 
-                               style="flex: 1; padding: 0.75rem 1rem; border: 1px solid rgba(255,255,255,0.1); 
-                                      background: rgba(255,255,255,0.05); color: #fff; border-radius: 5px; 
-                                      outline: none; transition: var(--transition);">
-                        <button type="submit" 
-                                style="background: #4A90E2; color: white; border: none; padding: 0 1.5rem; 
-                                       border-radius: 5px; cursor: pointer; transition: var(--transition);">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </form>
                 </div>
             </div>
         </div>
@@ -876,11 +812,13 @@
                     &copy; <?php echo date('Y'); ?> SentiSyncEd. All Rights Reserved.
                 </p>
                 <div style="margin-top: 1rem;">
-                    <a href="#" style="color: #ecf0f1; text-decoration: none; font-size: 0.8rem; opacity: 0.7; margin: 0 0.5rem; transition: opacity 0.3s ease;">
+                    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer"
+                    style="color: #ecf0f1; text-decoration: none; font-size: 0.8rem; opacity: 0.7; margin: 0 0.5rem; transition: opacity 0.3s ease;">
                         Kebijakan Privasi
                     </a>
                     <span style="opacity: 0.3;">|</span>
-                    <a href="#" style="color: #ecf0f1; text-decoration: none; font-size: 0.8rem; opacity: 0.7; margin: 0 0.5rem; transition: opacity 0.3s ease;">
+                    <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer"
+                    style="color: #ecf0f1; text-decoration: none; font-size: 0.8rem; opacity: 0.7; margin: 0 0.5rem; transition: opacity 0.3s ease;">
                         Syarat & Ketentuan
                     </a>
                 </div>
