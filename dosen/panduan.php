@@ -271,9 +271,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Dosen') {
         <div class="container-fluid">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
                 <h1 class="h2"><i class="bi bi-question-circle me-2"></i>Panduan Penggunaan SentiSyncEd</h1>
-                <button id="downloadPdfTop" class="btn btn-primary d-flex align-items-center">
+                <a href="generate_panduan_pdf.php" class="btn btn-primary d-flex align-items-center" id="downloadPdfTop">
                     <i class="bi bi-download me-2"></i> Unduh Panduan (PDF)
-                </button>
+                </a>
             </div>
             <div class="row">
                 <div class="col-12">
@@ -555,9 +555,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Dosen') {
 
                     <!-- Download Button at Bottom -->
                     <div class="text-center my-5">
-                        <button id="downloadPdfBottom" class="btn btn-primary">
+                        <a href="generate_panduan_pdf.php" class="btn btn-primary" id="downloadPdfBottom">
                             <i class="bi bi-download me-2"></i> Unduh Panduan (PDF)
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
