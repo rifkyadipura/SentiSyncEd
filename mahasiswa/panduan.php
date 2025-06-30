@@ -21,7 +21,6 @@ $page_title = 'Panduan Penggunaan';
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="../css/styles_mahasiswa.css">
     <style>
         /* Base Layout */
@@ -573,191 +572,14 @@ $page_title = 'Panduan Penggunaan';
                     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Menyiapkan PDF...';
                     btn.disabled = true;
                     
-                    // Get the guide content
-                    const guideContent = document.querySelector('.main-content');
-                    if (!guideContent) {
-                        throw new Error('Konten panduan tidak ditemukan');
-                    }
+                    // Redirect to the server-side PDF generator
+                    window.location.href = 'generate_panduan_pdf.php';
                     
-                    // Create a clean copy of the content
-                    const content = guideContent.cloneNode(true);
-                    
-                    // Remove elements that shouldn't be in the PDF
-                    const elementsToRemove = content.querySelectorAll('.btn, .d-print-none, .mobile-navbar, .sidebar, .user-dropdown');
-                    elementsToRemove.forEach(el => el.remove());
-                    
-                    // Expand all accordions
-                    const accordionButtons = content.querySelectorAll('.accordion-button');
-                    accordionButtons.forEach(button => {
-                        button.classList.remove('collapsed');
-                        button.setAttribute('aria-expanded', 'true');
-                    });
-                    
-                    const accordionBodies = content.querySelectorAll('.accordion-collapse');
-                    accordionBodies.forEach(body => {
-                        body.classList.add('show');
-                        body.style.display = 'block';
-                    });
-                    
-                    // Create a new window for PDF
-                    const printWindow = window.open('');
-                    
-                    // Create the HTML document
-                    const html = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>Panduan Penggunaan SentiSyncEd</title>
-                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-                        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-                        <style>
-                            body {
-                                font-family: 'Poppins', sans-serif;
-                                line-height: 1.6;
-                                color: #333;
-                                padding: 20px;
-                            }
-                            .container {
-                                max-width: 210mm;
-                                margin: 0 auto;
-                            }
-                            h1, h2, h3, h4 {
-                                color: #2c3e50;
-                            }
-                            .guide-section {
-                                page-break-inside: avoid;
-                                margin-bottom: 30px;
-                                padding: 20px;
-                                background: #fff;
-                                border-radius: 0.5rem;
-                                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-                            }
-                            .guide-step {
-                                margin-bottom: 20px;
-                                position: relative;
-                                padding-left: 40px;
-                            }
-                            .step-number {
-                                position: absolute;
-                                left: 0;
-                                top: 0;
-                                width: 30px;
-                                height: 30px;
-                                background: #4e73df;
-                                color: white;
-                                border-radius: 50%;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-weight: bold;
-                            }
-                            .note {
-                                background-color: #f8f9fc;
-                                border-left: 4px solid #4e73df;
-                                padding: 15px;
-                                margin: 15px 0;
-                                border-radius: 0 5px 5px 0;
-                            }
-                            img {
-                                max-width: 100%;
-                                height: auto;
-                                margin: 10px 0;
-                                border: 1px solid #eee;
-                                border-radius: 4px;
-                            }
-                            @page {
-                                size: A4;
-                                margin: 15mm 15mm 15mm 15mm;
-                            }
-                            @media print {
-                                body {
-                                    padding: 0;
-                                }
-                                .container {
-                                    padding: 0;
-                                }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <div class="text-center mb-4">
-                                <h1 class="mb-1">Panduan Penggunaan SentiSyncEd</h1>
-                                <p class="text-muted">
-                                    Dokumen ini dibuat pada ${new Date().toLocaleDateString('id-ID', { 
-                                        weekday: 'long', 
-                                        year: 'numeric', 
-                                        month: 'long', 
-                                        day: 'numeric' 
-                                    })}
-                                </p>
-                            </div>
-                            ${content.innerHTML}
-                            <div class="text-center mt-4 pt-3 border-top text-muted small">
-                                &copy; ${new Date().getFullYear()} SentiSyncEd - All Rights Reserved
-                            </div>
-                        </div>
-                    </body>
-                    </html>`;
-
-                    // Write the HTML to the new window
-                    printWindow.document.open();
-                    printWindow.document.write(html);
-                    printWindow.document.close();
-                    
-                    // Wait for content to load
-                    printWindow.onload = function() {
-                        // Configure html2pdf
-                        const opt = {
-                            margin: [15, 15],
-                            filename: 'Panduan_Penggunaan_SentiSyncEd.pdf',
-                            image: { 
-                                type: 'jpeg', 
-                                quality: 0.98,
-                                background: '#FFFFFF'
-                            },
-                            html2canvas: { 
-                                scale: 2,
-                                useCORS: true,
-                                logging: true,
-                                letterRendering: true,
-                                scrollX: 0,
-                                scrollY: 0
-                            },
-                            jsPDF: { 
-                                unit: 'mm', 
-                                format: 'a4',
-                                orientation: 'portrait'
-                            },
-                            pagebreak: {
-                                mode: ['avoid-all', 'css', 'legacy'],
-                                before: '.page-break-before',
-                                after: '.page-break-after',
-                                avoid: ['img', 'h3', 'h4', '.guide-step', '.note']
-                            }
-                        };
-                        
-                        // Generate PDF
-                        html2pdf()
-                            .set(opt)
-                            .from(printWindow.document.body)
-                            .save()
-                            .then(() => {
-                                // Close the preview window
-                                printWindow.close();
-                                // Reset button state
-                                btn.innerHTML = originalText;
-                                btn.disabled = false;
-                            })
-                            .catch(error => {
-                                console.error('Error generating PDF:', error);
-                                printWindow.close();
-                                alert('Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');
-                                btn.innerHTML = originalText;
-                                btn.disabled = false;
-                            });
-                    };
+                    // Reset button after a short delay
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }, 3000);
                     
                 } catch (error) {
                     console.error('Error in downloadPDF:', error);
